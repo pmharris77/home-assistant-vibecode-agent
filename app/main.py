@@ -37,27 +37,31 @@ app.add_middleware(
 # Security
 security = HTTPBearer()
 
-# Get HA Token from environment (for development) or use Supervisor token
-HA_TOKEN = os.getenv('HA_TOKEN', '')
+# Get HA Token from environment
 SUPERVISOR_TOKEN = os.getenv('SUPERVISOR_TOKEN', '')
+DEV_TOKEN = os.getenv('HA_TOKEN', '')  # For local development only
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
     """
-    Verify API token - accepts either:
-    1. User's Long-Lived Access Token (from HA)
-    2. Supervisor token (when running as add-on)
-    3. Development token (HA_TOKEN env var)
+    Verify API token.
+    
+    In add-on mode (SUPERVISOR_TOKEN exists):
+    - Accepts any token from user (their Long-Lived Access Token)
+    - HA API will validate it when making requests
+    
+    In development mode (no SUPERVISOR_TOKEN):
+    - Requires matching DEV_TOKEN from environment
     """
     token = credentials.credentials
     
-    # In add-on mode, we validate token by making a test request to HA API
-    # This way ANY valid HA token works!
-    if not HA_TOKEN:  # Add-on mode
-        # Accept any token - HA API will validate it
-        # This allows users to use their own Long-Lived tokens
+    if SUPERVISOR_TOKEN:
+        # Add-on mode: accept any token
+        # User provides their own Long-Lived Access Token
+        # HA API will validate it when we make requests
         return token
-    else:  # Development mode
-        if token != HA_TOKEN:
+    else:
+        # Development mode: check against DEV_TOKEN
+        if token != DEV_TOKEN:
             raise HTTPException(status_code=401, detail="Invalid authentication token")
         return token
 
