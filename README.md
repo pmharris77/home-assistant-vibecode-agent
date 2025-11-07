@@ -77,9 +77,11 @@
 3. Test: `http://homeassistant.local:8099/api/health`
 
 ### 4. Get Token
-1. **Profile** → **Long-Lived Access Tokens** → **CREATE TOKEN**
-2. Name: `HA Cursor Agent`
-3. **Copy token** and save it
+1. Click your **Profile Name** (bottom left) → **Security**
+2. **Refresh Tokens** section → **Long-lived access tokens**
+3. **CREATE TOKEN**
+4. Name: `HA Cursor Agent`
+5. **Copy token** and save it securely
 
 ### 5. Test API
 Open `http://homeassistant.local:8099/docs` and explore! 🎉
@@ -374,7 +376,7 @@ The add-on automatically uses the Supervisor token. No configuration needed.
 
 ### Using Long-Lived Token (external access)
 
-1. Create token in HA: **Profile** → **Long-Lived Access Tokens**
+1. Create token in HA: **Profile Name** (bottom left) → **Security** → **Long-lived access tokens** → **CREATE TOKEN**
 2. Add header to requests:
    ```
    Authorization: Bearer YOUR_TOKEN_HERE
