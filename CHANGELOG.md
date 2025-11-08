@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2025-11-08
+
+### Added
+- **CLIMATE_CONTROL_BEST_PRACTICES.md** - Comprehensive guide with 10+ real-world edge cases
+  - TRV state changes during cooldown (with solution)
+  - Sensor update delay after state changes (10 second rule)
+  - Minimum boiler runtime protection (buffer radiators)
+  - Predictive shutdown timing (0.3°C threshold)
+  - Adaptive cooldown duration based on runtime
+  - Multiple trigger automations for reliability
+  - State tracking with input helpers
+  - Buffer radiators coordination
+  - System enable/disable transitions
+  - Periodic check as safety net
+- **Climate Control section in AI Instructions:**
+  - Mandatory checklist for TRV/boiler automations
+  - Critical edge cases to handle
+  - Required sensors and helpers
+  - Core automations (Priority 1, 2, 3)
+  - Timing guidelines
+  - Common mistakes to avoid
+  - Testing checklist
+
+### Documentation
+- Added comprehensive climate control best practices based on production testing
+- Real-world performance data (7+ days continuous operation)
+- Architecture patterns for state-based automations
+- Golden rules for reliable automation
+- Lessons applicable to ANY state-based automation system
+
+### Impact
+- AI agents will now implement climate control with proven edge case handling
+- Prevents common failures (stuck states, missed triggers, short-cycling)
+- Saves debugging time by implementing solutions from day one
+- Applicable to other automation systems beyond climate control
+
 ## [1.0.7] - 2025-11-08
 
 ### Changed

@@ -12,7 +12,7 @@ AI_INSTRUCTIONS = """
 HA CURSOR AGENT - INSTRUCTIONS FOR AI ASSISTANTS
 ================================================================================
 
-Version: 1.0.7
+Version: 1.0.8
 Base URL: http://homeassistant.local:8099
 Interactive Docs: http://homeassistant.local:8099/docs
 
@@ -244,6 +244,181 @@ If any operation fails:
 ✅ Give user control - ask before major changes
 ✅ Show file diffs when modifying YAML
 ✅ Validate YAML syntax before applying
+
+================================================================================
+🌡️ CLIMATE CONTROL SYSTEMS - CRITICAL EDGE CASES
+================================================================================
+
+**⚠️ MANDATORY: Read CLIMATE_CONTROL_BEST_PRACTICES.md before creating TRV/boiler automations!**
+
+Location: /config/CLIMATE_CONTROL_BEST_PRACTICES.md (in HA Cursor Agent repo)
+
+When user requests climate control automation (TRV + boiler), you MUST:
+
+### 1. Read the Best Practices Document
+   ```
+   This document contains 10+ real-world edge cases discovered through
+   production testing. DO NOT skip these - they prevent system failures!
+   ```
+
+### 2. Critical Edge Cases to Handle
+
+   ⚠️ **TRV State Changes During Cooldown**
+   - TRV may open while cooldown is active
+   - State change won't trigger automation (condition blocks it)
+   - MUST check pending TRV states after cooldown ends
+   - Solution: Add explicit check in end_cooldown automation
+
+   ⚠️ **Sensor Update Delay**
+   - After changing input_boolean, template sensors need time to update
+   - 2 seconds is TOO SHORT - use 10 seconds
+   - Example: After turning off cooldown flag, wait 10s before checking sensors
+   - Solution: Add 10-second delay after state changes
+
+   ⚠️ **Minimum Boiler Runtime**
+   - Never turn off boiler before 10 minutes
+   - Wastes energy and damages equipment
+   - If all TRVs close early, activate buffer radiators
+   - Solution: Check runtime >= 10 min in all stop conditions
+
+   ⚠️ **Predictive Shutdown**
+   - Don't wait until TRVs reach exact target (overshoot from inertia)
+   - Implement early shutdown when TRVs are 0.3°C from target
+   - Only after minimum runtime
+   - Solution: Create sensor.all_trvs_almost_at_target
+
+   ⚠️ **Multiple Trigger Automations**
+   - Single trigger = single point of failure
+   - Add time-based backup trigger (every 1-2 minutes)
+   - System self-heals from missed triggers
+   - Solution: Every critical automation needs dual triggers
+
+### 3. Required Template Sensors
+
+   ```yaml
+   sensor.any_trv_heating:
+     # Boolean: at least one TRV is heating
+   
+   sensor.active_trv_count:
+     # Number + list of room names currently heating
+   
+   sensor.boiler_runtime_minutes:
+     # Minutes since boiler started (from input_datetime)
+   
+   sensor.adaptive_cooldown_remaining_minutes:
+     # Calculated cooldown time remaining
+   ```
+
+### 4. Required Input Helpers
+
+   ```yaml
+   input_boolean.climate_system_enabled
+   input_boolean.boiler_cooldown_active
+   input_text.climate_system_state  # idle/heating/cooldown
+   input_number.climate_cooldown_duration  # adaptive
+   input_datetime.boiler_last_started
+   input_datetime.boiler_last_stopped
+   ```
+
+### 5. Core Automations (Non-negotiable)
+
+   **Priority 1 (Critical):**
+   - start_heating (when TRV opens, check cooldown)
+   - stop_all_idle (when all close, check min runtime)
+   - stop_max_runtime (safety cutoff at 30 min)
+   - end_cooldown (MUST check if TRVs still heating!)
+
+   **Priority 2 (Safety):**
+   - periodic_check (every 2 min, backup mechanism)
+   - system_enabled_check (clean startup)
+   - system_disabled_reset (clean shutdown)
+
+   **Priority 3 (Optional):**
+   - stop_predictive (energy saving)
+   - trv_opened_during_cooldown (logging/visibility)
+
+### 6. Timing Guidelines
+
+   ```
+   Minimum boiler runtime: 10 minutes (enforced!)
+   Maximum boiler runtime: 30 minutes (safety!)
+   Cooldown duration: 15-30 min (adaptive based on runtime)
+   Delay after state change: 10 seconds (sensor update time)
+   Periodic check interval: 2 minutes (backup trigger)
+   Predictive threshold: 0.3°C before target
+   ```
+
+### 7. Workflow for Climate Control
+
+   ```
+   User: "Create TRV automation for my boiler"
+   
+   You:
+   1. "I'll implement climate control with these edge cases: [list critical ones]"
+   2. Read CLIMATE_CONTROL_BEST_PRACTICES.md
+   3. Identify TRV entities (GET /api/entities/list?domain=climate)
+   4. Identify boiler entity (usually switch or climate domain)
+   5. Create all required template sensors
+   6. Create all required input helpers
+   7. Create Priority 1 automations (critical)
+   8. Create Priority 2 automations (safety)
+   9. Optional: Create Priority 3 (optimization)
+   10. Test each automation path with user
+   11. Monitor for 24-48 hours, adjust timings
+   ```
+
+### 8. Common Mistakes to Avoid
+
+   ❌ No minimum runtime protection → boiler short-cycles
+   ❌ No delay after state changes → false sensor readings
+   ❌ Single trigger only → system gets stuck
+   ❌ No post-cooldown check → TRV heating but boiler off
+   ❌ No periodic backup → missed triggers never recover
+   ❌ No logging → impossible to debug
+   ❌ Fixed cooldown → inefficient (too long/short)
+
+### 9. Testing Checklist
+
+   Before marking complete:
+   - [ ] TRV opens during cooldown → logs message, starts after cooldown
+   - [ ] All TRVs close before 10 min → buffer radiators activate OR stays on
+   - [ ] Maximum runtime reached → boiler turns off
+   - [ ] System disabled during heating → clean reset
+   - [ ] HA restart during each state → system recovers
+   - [ ] Periodic check catches missed trigger → self-heals
+
+### 10. When User Has Climate Control Request
+
+   **DO:**
+   ✅ Mention you'll implement proven edge case handling
+   ✅ Explain the critical ones (cooldown, minimum runtime, delays)
+   ✅ Show which sensors and helpers will be created
+   ✅ Implement ALL Priority 1 and 2 automations (not optional!)
+   ✅ Add logging for debugging
+   ✅ Provide testing instructions
+
+   **DON'T:**
+   ❌ Create "simple" version without edge case handling
+   ❌ Skip minimum runtime protection ("user can add later")
+   ❌ Skip periodic checks ("automations should work")
+   ❌ Use 2-second delays ("should be enough")
+   ❌ Single triggers only ("time patterns are extra")
+
+### 📚 Full Documentation
+
+   For complete details including:
+   - All 10 edge cases with solutions
+   - Architecture patterns
+   - Safety rules
+   - Real-world performance data
+   - Templates and examples
+   
+   Read: CLIMATE_CONTROL_BEST_PRACTICES.md in HA Cursor Agent repo
+
+**🎯 Bottom Line:**
+Climate control automation is NOT trivial. These edge cases were discovered
+through real production use. Implementing them from the start saves hours of
+debugging and prevents system failures.
 
 ================================================================================
 API ENDPOINTS SUMMARY

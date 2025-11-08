@@ -21,7 +21,7 @@ logger = setup_logger('ha_cursor_agent', LOG_LEVEL)
 app = FastAPI(
     title="HA Cursor Agent API",
     description="AI Agent API for Home Assistant - enables Cursor AI to manage HA configuration",
-    version="1.0.7",
+    version="1.0.8",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -44,7 +44,7 @@ DEV_TOKEN = os.getenv('HA_TOKEN', '')  # For local development only
 HA_URL = os.getenv('HA_URL', 'http://supervisor/core')
 
 # Log startup configuration
-AGENT_VERSION = "1.0.7"
+AGENT_VERSION = "1.0.8"
 supervisor_token_status = "PRESENT" if SUPERVISOR_TOKEN else "MISSING"
 dev_token_status = "PRESENT" if DEV_TOKEN else "MISSING"
 
