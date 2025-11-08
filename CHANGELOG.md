@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2025-11-08
+
+### Added
+- **GET /api/helpers/list** endpoint to list all input helpers
+- Better agent logs support with level filtering (DEBUG, INFO, WARNING, ERROR)
+
+### Changed
+- Improved MCP client logs handling with proper parameter names (limit, level)
+- Updated tool descriptions for better clarity
+
 ## [1.0.4] - 2025-11-08
 
 ### Fixed

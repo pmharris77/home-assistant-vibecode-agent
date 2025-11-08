@@ -9,6 +9,55 @@ from app.services.git_manager import git_manager
 router = APIRouter()
 logger = logging.getLogger('ha_cursor_agent')
 
+@router.get("/list")
+async def list_helpers():
+    """
+    List all input helpers
+    
+    Returns all entities from helper domains:
+    - input_boolean
+    - input_text
+    - input_number
+    - input_datetime
+    - input_select
+    
+    Example response:
+    ```json
+    {
+      "success": true,
+      "count": 15,
+      "helpers": [
+        {
+          "entity_id": "input_boolean.climate_system_enabled",
+          "state": "on",
+          "attributes": {...}
+        }
+      ]
+    }
+    ```
+    """
+    try:
+        # Get all entities
+        all_states = await ha_client.get_states()
+        
+        # Filter helper entities
+        helper_domains = ['input_boolean', 'input_text', 'input_number', 'input_datetime', 'input_select']
+        helpers = [
+            entity for entity in all_states 
+            if any(entity['entity_id'].startswith(f"{domain}.") for domain in helper_domains)
+        ]
+        
+        logger.info(f"Listed {len(helpers)} helpers")
+        
+        return {
+            "success": True,
+            "count": len(helpers),
+            "helpers": helpers
+        }
+    except Exception as e:
+        logger.error(f"Failed to list helpers: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/create", response_model=Response)
 async def create_helper(helper: HelperCreate):
     """
