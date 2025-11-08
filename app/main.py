@@ -122,6 +122,18 @@ def get_or_generate_api_key():
     logger.info("💡 You can also view it anytime in: Sidebar → API Key")
     logger.info("=" * 70)
     
+    # Send notification if enabled
+    if SEND_NOTIFICATION and SUPERVISOR_TOKEN:
+        try:
+            # Import here to avoid issues at module level
+            import asyncio
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(send_notification(api_key))
+            loop.close()
+            logger.info("📧 Notification sent to Home Assistant")
+        except Exception as e:
+            logger.warning(f"Failed to send notification: {e}")
+    
     return api_key
 
 
@@ -142,13 +154,7 @@ logger.info(f"Mode: {'Add-on (using SUPERVISOR_TOKEN for HA API)' if SUPERVISOR_
 logger.info(f"API Key: {'Custom (from config)' if API_KEY_FROM_CONFIG else 'Auto-generated'}")
 logger.info(f"=================================")
 
-# Send notification if configured and key was just generated
-if SEND_NOTIFICATION and not API_KEY_FROM_CONFIG and not API_KEY_FILE.exists():
-    import asyncio
-    # Schedule notification after startup
-    @app.on_event("startup")
-    async def startup_notification():
-        await send_notification(API_KEY)
+# Note: Notification logic is handled inside get_or_generate_api_key() function
 
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
