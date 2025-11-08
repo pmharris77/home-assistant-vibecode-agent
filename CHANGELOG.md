@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2025-11-08
+
+### Changed
+- **AI-controlled reload workflow:** Files API no longer auto-reloads after writes
+  - Safer: AI must explicitly check config validity before reload
+  - Faster: Batch multiple changes → single reload at the end
+  - More control: AI decides when to reload based on change scope
+
+### Added
+- **Comprehensive modification workflow in AI Instructions:**
+  - 6-step process: Backup → Write → Check → Reload → Verify → Commit
+  - Configuration validation before reload (prevents broken HA state)
+  - Rollback guidance if validation fails
+  - Example workflows for common scenarios
+
+### Fixed
+- **Safety improvement:** Removed automatic reload that could apply invalid configurations
+- **Performance:** No more multiple reloads when making batch changes
+
 ## [1.0.6] - 2025-11-08
 
 ### Changed

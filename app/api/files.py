@@ -60,6 +60,7 @@ async def write_file(file_data: FileContent):
     Write or create file
     
     **Automatically creates backup if file exists!**
+    **Note:** Does NOT auto-reload. Use /api/system/reload after changes.
     
     Example request:
     ```json
@@ -83,6 +84,8 @@ async def write_file(file_data: FileContent):
             if commit:
                 result['git_commit'] = commit
         
+        logger.info(f"File written: {file_data.path}. Remember to reload components if needed!")
+        
         return Response(success=True, message=f"File written: {file_data.path}", data=result)
     except Exception as e:
         logger.error(f"Failed to write file: {e}")
@@ -92,6 +95,8 @@ async def write_file(file_data: FileContent):
 async def append_to_file(file_data: FileAppend):
     """
     Append content to file
+    
+    **Note:** Does NOT auto-reload. Use /api/system/reload after changes.
     
     Example:
     ```json
@@ -109,6 +114,8 @@ async def append_to_file(file_data: FileAppend):
             commit = await git_manager.commit_changes(f"Append to file: {file_data.path}")
             if commit:
                 result['git_commit'] = commit
+        
+        logger.info(f"Content appended to: {file_data.path}. Remember to reload components if needed!")
         
         return Response(success=True, message=f"Content appended to: {file_data.path}", data=result)
     except Exception as e:

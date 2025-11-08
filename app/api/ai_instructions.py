@@ -12,7 +12,7 @@ AI_INSTRUCTIONS = """
 HA CURSOR AGENT - INSTRUCTIONS FOR AI ASSISTANTS
 ================================================================================
 
-Version: 1.0.6
+Version: 1.0.7
 Base URL: http://homeassistant.local:8099
 Interactive Docs: http://homeassistant.local:8099/docs
 
@@ -88,7 +88,95 @@ Before ANY write operation:
    - Verify each step before next
    - Don't bulk-create without testing
 
-## 4️⃣ POST-MODIFICATION VERIFICATION
+## 4️⃣ MODIFICATION WORKFLOW (CRITICAL - FOLLOW EXACTLY)
+
+When modifying configuration files (automations.yaml, scripts.yaml, etc.):
+
+### Step-by-Step Process:
+
+1. **CREATE BACKUP (always first):**
+   ```
+   POST /api/backup/commit
+   {"message": "Backup before [your changes description]"}
+   ```
+
+2. **MAKE ALL CHANGES:**
+   ```
+   POST /api/files/write (automations.yaml)
+   POST /api/files/write (scripts.yaml)
+   POST /api/helpers/create (if needed)
+   ... all your modifications ...
+   ```
+   
+   ⚠️ **IMPORTANT:** These do NOT auto-reload! This is intentional.
+
+3. **CHECK CONFIGURATION VALIDITY:**
+   ```
+   POST /api/system/check-config
+   ```
+   
+   **IF check fails:**
+   - ❌ STOP immediately
+   - Show errors to user
+   - Offer rollback: `POST /api/backup/rollback/{commit_hash}`
+   - **DO NOT reload!**
+   
+   **IF check passes:**
+   - ✅ Continue to step 4
+
+4. **RELOAD COMPONENTS:**
+   ```
+   POST /api/system/reload?component=automations
+   POST /api/system/reload?component=scripts
+   ```
+   
+   Or reload everything:
+   ```
+   POST /api/system/reload?component=all
+   ```
+
+5. **VERIFY CHANGES APPLIED:**
+   ```
+   GET /api/automations/list
+   GET /api/scripts/list
+   ```
+   Check that your changes are present and active.
+
+6. **FINAL COMMIT:**
+   ```
+   POST /api/backup/commit
+   {"message": "Applied changes: [description]"}
+   ```
+
+### Why This Order Matters:
+
+- 🔒 **Backup first** - can rollback if anything fails
+- 📝 **Write all changes** - make all modifications together
+- ✅ **Check config** - validate BEFORE reloading (safer!)
+- 🔄 **Reload once** - faster than reloading after each file
+- ✔️ **Verify** - confirm changes are active
+- 💾 **Final commit** - mark successful deployment
+
+### Example Workflow:
+
+```
+User: "Add automation for lights at sunset"
+
+You:
+1. POST /api/backup/commit ("Backup before adding sunset lights automation")
+2. Read current automations.yaml
+3. Add new automation
+4. POST /api/files/write (updated automations.yaml)
+5. POST /api/system/check-config
+   → If errors: rollback and report
+   → If OK: continue
+6. POST /api/system/reload?component=automations
+7. GET /api/automations/list (verify it's there)
+8. POST /api/backup/commit ("Added sunset lights automation")
+9. Tell user: "✅ Done! Check: http://homeassistant.local:8123/config/automation"
+```
+
+## 5️⃣ POST-MODIFICATION VERIFICATION
 
 After making changes, ALWAYS provide:
 
@@ -138,9 +226,12 @@ If any operation fails:
 ❌ Skip reading current configuration
 ❌ Use syntax from training data without verification
 ❌ Modify production systems without backups
+❌ **Reload without checking config first** - ALWAYS check-config before reload!
+❌ **Auto-reload after every file write** - batch changes, reload once at the end
 ❌ Ignore configuration check errors
 ❌ Bulk-create entities without incremental testing
 ❌ Assume your knowledge is current - USER'S FILES = SOURCE OF TRUTH
+❌ Skip the 6-step modification workflow above
 
 ## ✅ BEST PRACTICES
 

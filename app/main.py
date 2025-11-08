@@ -21,7 +21,7 @@ logger = setup_logger('ha_cursor_agent', LOG_LEVEL)
 app = FastAPI(
     title="HA Cursor Agent API",
     description="AI Agent API for Home Assistant - enables Cursor AI to manage HA configuration",
-    version="1.0.6",
+    version="1.0.7",
     docs_url="/docs",
     redoc_url="/redoc"
 )
