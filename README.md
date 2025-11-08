@@ -2,14 +2,15 @@
 
 **AI Agent API for Home Assistant - enables Cursor AI to autonomously manage your HA configuration**
 
-[![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
+[![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![MCP Package](https://img.shields.io/npm/v/@coolver/mcp-home-assistant?label=MCP%20Package)](https://www.npmjs.com/package/@coolver/mcp-home-assistant)
 
 ---
 
 ## 🎯 What is this?
 
-**HA Cursor Agent** is a Home Assistant Add-on that provides a **REST API** for AI assistants (like Cursor AI) to:
+**HA Cursor Agent** is a Home Assistant Add-on that provides a **REST API** for AI assistants (like Cursor AI via [MCP protocol](https://github.com/Coolver/mcp-home-assistant)) to:
 
 ✅ **Read/Write** configuration files (configuration.yaml, automations.yaml, scripts.yaml)  
 ✅ **Create/Manage** Input Helpers, Automations, Scripts  
@@ -90,7 +91,7 @@ Open `http://homeassistant.local:8099/docs` and explore! 🎉
 
 ## 🤖 Using with Cursor AI
 
-This add-on enables **Cursor AI to autonomously manage your Home Assistant** through natural language prompts - no manual copy-pasting needed!
+This add-on enables **Cursor AI to autonomously manage your Home Assistant** through natural language - no manual copy-pasting needed!
 
 ### ⚠️ Important Disclaimer
 
@@ -104,30 +105,82 @@ This add-on enables **Cursor AI to autonomously manage your Home Assistant** thr
 
 **Use at your own risk. The automatic backup system minimizes risk but doesn't eliminate it.**
 
-### How to Connect Cursor AI
+### How to Connect Cursor AI (MCP)
 
-Once the add-on is installed and running, use this simple prompt:
+**New recommended way using Model Context Protocol (MCP):**
 
-```
-I have HA Cursor Agent running on my Home Assistant.
+#### 1. Install MCP Server
 
-Token: YOUR_LONG_LIVED_ACCESS_TOKEN
-API Base: http://YOUR_HA_IP:8099
+Install the MCP package globally or use npx:
 
-Please read the AI instructions from:
-http://YOUR_HA_IP:8099/api/ai/instructions
-
-Confirm you're ready and understand the safety protocols.
-
-My request: [describe what you want]
+```bash
+npm install -g @coolver/mcp-home-assistant
 ```
 
-**Finding YOUR_HA_IP:**
-- Open Home Assistant: **Settings** → **System** → **Network**
-- Look for **IPv4 address** (e.g., `192.168.68.62`)
-- Or use `homeassistant.local` if mDNS works on your network
+Or test without installation using npx (recommended).
 
-**That's it!** Cursor AI will fetch the instructions from your local add-on (no internet needed) and follow all safety protocols.
+#### 2. Configure Cursor
+
+Add to your `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "home-assistant": {
+      "command": "npx",
+      "args": ["-y", "@coolver/mcp-home-assistant"],
+      "env": {
+        "HA_AGENT_URL": "http://homeassistant.local:8099",
+        "HA_TOKEN": "YOUR_LONG_LIVED_ACCESS_TOKEN"
+      }
+    }
+  }
+}
+```
+
+**If installed globally:**
+
+```json
+{
+  "mcpServers": {
+    "home-assistant": {
+      "command": "mcp-home-assistant",
+      "env": {
+        "HA_AGENT_URL": "http://homeassistant.local:8099",
+        "HA_TOKEN": "YOUR_LONG_LIVED_ACCESS_TOKEN"
+      }
+    }
+  }
+}
+```
+
+**Replace:**
+- `YOUR_LONG_LIVED_ACCESS_TOKEN` - token from Step 4 above
+- `homeassistant.local` - with your HA IP if needed (e.g., `http://192.168.1.100:8099`)
+
+#### 3. Restart Cursor
+
+Restart Cursor AI to load the MCP configuration.
+
+#### 4. Start Using!
+
+Just talk to Cursor AI:
+
+```
+Show me all my climate entities
+```
+
+```
+List my automations
+```
+
+```
+Create a new automation that turns on lights at sunset
+```
+
+**That's it!** Cursor AI will use the MCP protocol to communicate with your Home Assistant.
+
+**Learn more:** [MCP Home Assistant on GitHub](https://github.com/Coolver/mcp-home-assistant) | [NPM Package](https://www.npmjs.com/package/@coolver/mcp-home-assistant)
 
 ### Example Prompts
 

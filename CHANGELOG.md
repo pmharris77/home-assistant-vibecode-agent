@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2025-11-08
+
+### Changed
+- **Updated documentation for MCP integration** - New recommended way to connect Cursor AI
+- Added link to [@coolver/mcp-home-assistant](https://www.npmjs.com/package/@coolver/mcp-home-assistant) NPM package
+- Simplified connection instructions using Model Context Protocol
+- Updated README with MCP badge and links
+
+### Documentation
+- Replaced old prompt-based connection method with MCP configuration
+- Added step-by-step MCP setup guide
+- Added examples of natural language usage with MCP
+
 ## [1.0.5] - 2025-11-08
 
 ### Added
