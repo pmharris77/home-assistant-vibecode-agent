@@ -43,15 +43,19 @@ SUPERVISOR_TOKEN = os.getenv('SUPERVISOR_TOKEN', '')  # Auto-provided by HA when
 DEV_TOKEN = os.getenv('HA_TOKEN', '')  # For local development only
 HA_URL = os.getenv('HA_URL', 'http://supervisor/core')
 
-# Log token availability at startup
+# Log startup configuration
+AGENT_VERSION = "1.0.7"
 supervisor_token_status = "PRESENT" if SUPERVISOR_TOKEN else "MISSING"
 dev_token_status = "PRESENT" if DEV_TOKEN else "MISSING"
-logger.info(f"=== Token Configuration ===")
+
+logger.info(f"=================================")
+logger.info(f"HA Cursor Agent v{AGENT_VERSION}")
+logger.info(f"=================================")
 logger.info(f"SUPERVISOR_TOKEN: {supervisor_token_status}")
 logger.info(f"DEV_TOKEN (HA_TOKEN): {dev_token_status}")
 logger.info(f"HA_URL: {HA_URL}")
 logger.info(f"Mode: {'Add-on (using SUPERVISOR_TOKEN for HA API)' if SUPERVISOR_TOKEN else 'Development (using DEV_TOKEN)'}")
-logger.info(f"============================")
+logger.info(f"=================================")
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
     """
@@ -105,7 +109,7 @@ async def root():
     """Root endpoint with API information"""
     return {
         "name": "HA Cursor Agent API",
-        "version": "1.0.4",
+        "version": AGENT_VERSION,
         "description": "AI Agent API for Home Assistant",
         "docs": "/docs",
         "ai_instructions": "/api/ai/instructions",
@@ -127,7 +131,7 @@ async def health():
     """Health check endpoint (no auth required)"""
     return {
         "status": "healthy",
-        "version": "1.0.4",
+        "version": AGENT_VERSION,
         "config_path": os.getenv('CONFIG_PATH', '/config'),
         "git_enabled": os.getenv('ENABLE_GIT', 'false') == 'true',
         "ai_instructions": "/api/ai/instructions"
