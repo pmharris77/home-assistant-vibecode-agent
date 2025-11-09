@@ -107,6 +107,68 @@ async def install_hacs():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/uninstall", response_model=Response, dependencies=[Depends(verify_token)])
+async def uninstall_hacs():
+    """
+    Uninstall HACS (Home Assistant Community Store)
+    
+    This will:
+    1. Remove custom_components/hacs directory
+    2. Remove HACS storage files
+    3. Restart Home Assistant
+    
+    **⚠️ Warning:** This will remove HACS and all its data
+    **⚠️ Note:** Home Assistant will restart automatically after uninstallation
+    """
+    try:
+        logger.info("Starting HACS uninstallation...")
+        
+        # Check if HACS installed
+        hacs_path = Path(HACS_INSTALL_PATH)
+        if not hacs_path.exists():
+            return Response(
+                success=True,
+                message="HACS is not installed",
+                data={"was_installed": False}
+            )
+        
+        # Remove HACS directory
+        logger.info(f"Removing HACS directory: {HACS_INSTALL_PATH}")
+        import shutil
+        shutil.rmtree(HACS_INSTALL_PATH)
+        logger.info("HACS directory removed")
+        
+        # Remove HACS storage files
+        storage_path = Path("/config/.storage")
+        if storage_path.exists():
+            hacs_storage_files = list(storage_path.glob("hacs*"))
+            for file in hacs_storage_files:
+                logger.info(f"Removing HACS storage file: {file}")
+                file.unlink()
+        
+        logger.info("HACS uninstalled successfully")
+        
+        # Restart Home Assistant
+        logger.warning("Restarting Home Assistant to apply changes...")
+        try:
+            await ha_client.restart()
+        except Exception as restart_error:
+            logger.warning(f"Restart command sent, but got error (this is normal): {restart_error}")
+        
+        return Response(
+            success=True,
+            message="HACS uninstalled successfully. Home Assistant is restarting...",
+            data={
+                "removed_path": HACS_INSTALL_PATH,
+                "restart_initiated": True
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to uninstall HACS: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/status", response_model=Response, dependencies=[Depends(verify_token)])
 async def get_hacs_status():
     """
