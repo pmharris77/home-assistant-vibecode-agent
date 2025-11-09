@@ -11,11 +11,36 @@ from app.services.lovelace_generator import lovelace_generator
 from app.services.ha_client import ha_client
 from app.services.file_manager import file_manager
 from app.services.git_manager import git_manager
+from app.utils.yaml_editor import YAMLEditor
 
 logger = logging.getLogger('ha_cursor_agent')
 router = APIRouter()
 
 # ==================== Helper Functions ====================
+
+async def _rollback_on_error(backup_commit: str, error_msg: str) -> None:
+    """
+    Automatically rollback changes if error occurred
+    
+    Args:
+        backup_commit: Commit hash to rollback to
+        error_msg: Error message that triggered rollback
+    """
+    try:
+        logger.error(f"Error occurred: {error_msg}")
+        logger.warning(f"Attempting automatic rollback to commit: {backup_commit}")
+        
+        # Use git_manager to rollback
+        rollback_result = await git_manager.rollback(backup_commit)
+        
+        if rollback_result:
+            logger.info(f"✅ Automatic rollback successful: {rollback_result}")
+        else:
+            logger.error("❌ Automatic rollback failed - manual intervention required")
+            
+    except Exception as rollback_error:
+        logger.error(f"Failed to perform automatic rollback: {rollback_error}")
+
 
 async def _remove_dashboard_from_config(filename: str) -> bool:
     """
@@ -36,29 +61,14 @@ async def _remove_dashboard_from_config(filename: str) -> bool:
         # Extract dashboard key from filename
         dashboard_key = filename.replace('.yaml', '').replace('.yml', '')
         
-        # Find and remove dashboard entry using regex
-        import re
+        # Use YAMLEditor utility to remove entry and clean up empty sections
+        new_config_content, was_found = YAMLEditor.remove_yaml_entry(
+            content=config_content,
+            section='lovelace',
+            key=dashboard_key
+        )
         
-        # Pattern to match dashboard entry (with proper indentation)
-        pattern = rf'    {dashboard_key}:\s*\n(?:      .*\n)+'
-        
-        if re.search(pattern, config_content):
-            new_config_content = re.sub(pattern, '', config_content)
-            
-            # Check if dashboards section is now empty
-            # Pattern: "  dashboards:\n" followed by only whitespace or next section
-            if re.search(r'  dashboards:\s*\n(?=\S|\Z)', new_config_content):
-                # dashboards section is empty - remove it
-                new_config_content = re.sub(r'  dashboards:\s*\n', '', new_config_content)
-                logger.info("Removed empty dashboards: section")
-                
-                # Check if lovelace section is now empty
-                if re.search(r'lovelace:\s*\n(?=\S|\Z)', new_config_content):
-                    # Remove entire empty lovelace section
-                    new_config_content = re.sub(r'# Lovelace Dashboards\s*\nlovelace:\s*\n', '', new_config_content)
-                    new_config_content = re.sub(r'\nlovelace:\s*\n(?=\S|\Z)', '\n', new_config_content)
-                    logger.info("Removed empty lovelace: section")
-            
+        if was_found:
             # Write updated configuration
             await file_manager.write_file(config_path, new_config_content)
             logger.info(f"Dashboard '{dashboard_key}' removed from configuration.yaml")
