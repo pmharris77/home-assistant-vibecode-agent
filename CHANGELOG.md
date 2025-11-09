@@ -2,6 +2,121 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2025-11-09
+
+### 🎨 MAJOR: Lovelace Dashboard Generator (Phase 2.1)
+
+**Automatic dashboard generation from your entities!** (#3 most requested feature, 85/100 priority)
+
+**New Service: LovelaceGenerator**
+- Analyzes entities by domain, area, and type
+- Generates beautiful views automatically
+- Smart grouping and recommendations
+- Supports 3 styles: modern, classic, minimal
+- Material Design patterns
+
+**New API Endpoints (4):**
+- `GET /api/lovelace/analyze` - Analyze entities & recommendations
+- `POST /api/lovelace/generate` - Generate complete dashboard config
+- `GET /api/lovelace/preview` - Preview current dashboard
+- `POST /api/lovelace/apply` - Apply dashboard with Git backup
+
+**Auto-generated Views:**
+- 🏠 Home: Weather + People + Quick controls
+- 💡 Lights: All lights (if >3 lights detected)
+- 🌡️ Climate: Thermostats/TRVs with thermostat cards
+- 🎵 Media: Media players with media-control cards
+- 📊 Sensors: Grouped by device_class
+- 🤖 Automation: Automations + Scripts management
+
+**Features:**
+- Smart room detection (from friendly_name)
+- Multi-language support (English, Russian)
+- Automatic card type selection
+- Git backup before applying
+- YAML output ready to use
+
+**Example workflow:**
+```
+User: "Create dashboard for my smart home"
+AI: Analyzes 50 entities → generates 6 views → applies with backup
+```
+
+**Impact:**
+- Beautiful dashboards without YAML knowledge
+- One-command dashboard creation
+- Killer feature for marketing
+- Great screenshots for README
+
+**Changes:**
+- app/services/lovelace_generator.py: NEW - entity analysis & generation
+- app/api/lovelace.py: NEW - 4 endpoints
+- app/main.py: registered lovelace router
+
+**Works with:** MCP v2.4.0+
+
+## [2.3.17] - 2025-11-09
+
+### 🗑️ Feature: HACS Uninstall
+
+**Added HACS uninstall endpoint:**
+- ✅ `POST /api/hacs/uninstall`
+- ✅ Removes `/custom_components/hacs` directory
+- ✅ Removes `.storage/hacs*` configuration files
+- ✅ Restarts Home Assistant automatically
+
+**Use cases:**
+- Testing HACS install/uninstall cycle
+- Clean removal of HACS
+- Troubleshooting by reinstalling
+- Reset to clean state
+
+**Changes:**
+- app/api/hacs.py: added uninstall_hacs() endpoint
+- repository.json: updated maintainer email
+
+## [2.3.16] - 2025-11-09
+
+### 📚 Documentation: Version Tracking
+
+**Added version tracking section to AI Instructions:**
+- How to check Agent version (startup logs)
+- How to check MCP version (connection logs)
+- Version compatibility matrix
+- Feature availability by version
+
+**Compatibility matrix:**
+- Agent v2.4.0 + MCP v2.4.0 = Lovelace dashboard generation
+- Agent v2.3.15 + MCP v2.3.5 = Full store catalog support
+- Agent v2.3.14 + MCP v2.3.4 = Repository management
+- Agent v2.3.10 + MCP v2.3.3 = Basic add-on management
+
+**Changes:**
+- app/api/ai_instructions.py: added VERSION TRACKING section
+
+## [2.3.15] - 2025-11-09
+
+### 📦 Feature: Store Catalog Endpoint
+
+**Added /store endpoint for complete add-ons catalog:**
+- ✅ `GET /api/addons/store` - Full catalog from all repositories
+- ✅ Returns ALL add-ons (not just installed)
+- ✅ Use for browsing and AI recommendations
+
+**Why:**
+- `/addons` returns limited list (~2 add-ons)
+- `/store` returns COMPLETE catalog (83+ add-ons)
+- Enables AI to recommend from full catalog
+
+**Use cases:**
+- AI can show all available add-ons
+- AI can recommend based on user needs
+- Complete catalog browsing
+
+**Changes:**
+- app/services/supervisor_client.py: added list_store_addons()
+- app/api/addons.py: added GET /store endpoint
+
 ## [2.3.14] - 2025-11-09
 
 ### 🐛 Bug Fix
