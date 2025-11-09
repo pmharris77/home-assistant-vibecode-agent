@@ -13,7 +13,7 @@ No more manual YAML editing or searching through documentation - just describe w
 
 **Real example:** User says *"Install smart climate control"* → AI analyzes 7 TRVs, creates 10 automations + 9 helpers + 10 sensors + 5 scripts, deploys everything, and it just works!
 
-[![Version](https://img.shields.io/badge/version-2.2.3-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
+[![Version](https://img.shields.io/badge/version-2.3.0-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![MCP Package](https://img.shields.io/npm/v/@coolver/mcp-home-assistant?label=MCP%20Package)](https://www.npmjs.com/package/@coolver/mcp-home-assistant)
 
@@ -60,7 +60,16 @@ No more manual YAML editing or searching through documentation - just describe w
 - Check configuration validity
 - Real-time state monitoring
 
-### 📦 HACS Management (NEW in v2.2.0!) 🔥
+### 🔌 Add-on Management (NEW in v2.3.0!) 🔥
+**Complete add-on lifecycle management - install, configure, and control services!**
+- Install/uninstall add-ons (Zigbee2MQTT, Node-RED, ESPHome, etc)
+- Configure add-on options
+- Start/stop/restart add-ons
+- Monitor add-on logs
+- Update add-ons
+- Powered by Supervisor API
+
+### 📦 HACS Management
 **Complete HACS integration via WebSocket - browse 1000+ custom integrations!**
 - Install HACS automatically from GitHub
 - Search repositories by name, author, or category

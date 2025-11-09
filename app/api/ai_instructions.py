@@ -12,7 +12,7 @@ AI_INSTRUCTIONS = """
 HA CURSOR AGENT - INSTRUCTIONS FOR AI ASSISTANTS
 ================================================================================
 
-Version: 2.2.3
+Version: 2.3.0
 Base URL: http://homeassistant.local:8099
 Interactive Docs: http://homeassistant.local:8099/docs
 
@@ -387,6 +387,225 @@ You: "HACS has hundreds of themes! Let me check if it's installed...
 - Check logs: GET /api/logs/?limit=20
 - Verify network access
 - Ensure /config/custom_components/ directory is writable
+
+================================================================================
+🔌 ADD-ON MANAGEMENT
+================================================================================
+
+Home Assistant add-ons extend functionality with services like MQTT brokers, 
+Zigbee coordinators, databases, and more. You can install, configure, and manage
+add-ons programmatically.
+
+## 📋 COMMON ADD-ONS
+
+**Official Core Add-ons:**
+- `core_mosquitto` - Mosquitto MQTT Broker
+- `core_mariadb` - MariaDB database
+- `core_file_editor` - File Editor
+- `core_ssh` - Terminal & SSH
+- `core_git_pull` - Git Pull
+
+**Community Add-ons (most popular):**
+- `a0d7b954_zigbee2mqtt` - Zigbee2MQTT (Zigbee coordinator)
+- `a0d7b954_nodered` - Node-RED (visual automation)
+- `a0d7b954_esphome` - ESPHome (DIY devices)
+- `core_duckdns` - DuckDNS (dynamic DNS)
+
+## 🚀 ADD-ON WORKFLOW
+
+### Step 1: List Available Add-ons
+```
+GET /api/addons/available
+```
+Returns all add-ons (installed and available), separated by status.
+
+### Step 2: Get Add-on Info
+```
+GET /api/addons/{slug}/info
+```
+Returns detailed information including:
+- Current version and available updates
+- Configuration options
+- State (started/stopped)
+- Resource usage
+
+### Step 3: Install Add-on
+```
+POST /api/addons/{slug}/install
+```
+**Note:** Installation can take 2-10 minutes depending on add-on size.
+The endpoint waits for installation to complete.
+
+### Step 4: Configure Add-on
+```
+POST /api/addons/{slug}/options
+Body: {
+  "options": {
+    "key": "value"
+  }
+}
+```
+**Important:** Most add-ons require restart after configuration changes.
+
+### Step 5: Start Add-on
+```
+POST /api/addons/{slug}/start
+```
+Starts the add-on service.
+
+### Step 6: Check Logs
+```
+GET /api/addons/{slug}/logs?lines=100
+```
+Essential for troubleshooting startup issues.
+
+## 🎯 COMMON USE CASES
+
+### Use Case 1: Install Zigbee2MQTT
+
+**User:** "Install Zigbee2MQTT for my Sonoff dongle"
+
+**You should:**
+```
+1. Install add-on:
+   POST /api/addons/a0d7b954_zigbee2mqtt/install
+   (This takes 3-5 minutes)
+
+2. Detect USB device:
+   POST /api/system/execute
+   Body: {"command": "ls -la /dev/tty*"}
+   (Look for devices like /dev/ttyUSB0 or /dev/ttyACM0)
+
+3. Configure serial port:
+   POST /api/addons/a0d7b954_zigbee2mqtt/options
+   Body: {
+     "options": {
+       "serial": {
+         "port": "/dev/ttyUSB0"
+       },
+       "mqtt": {
+         "server": "mqtt://core-mosquitto"
+       }
+     }
+   }
+
+4. Start add-on:
+   POST /api/addons/a0d7b954_zigbee2mqtt/start
+
+5. Monitor logs:
+   GET /api/addons/a0d7b954_zigbee2mqtt/logs?lines=50
+   (Check for successful connection to coordinator)
+
+6. Guide user:
+   "Zigbee2MQTT is now running. Open the web UI at:
+    http://homeassistant.local:8099/hassio/ingress/a0d7b954_zigbee2mqtt
+    to pair devices."
+```
+
+### Use Case 2: Install Complete Smart Home Stack
+
+**User:** "Setup infrastructure for Zigbee devices"
+
+**You should:**
+```
+1. Install Mosquitto MQTT broker:
+   POST /api/addons/core_mosquitto/install
+   POST /api/addons/core_mosquitto/start
+
+2. Wait 30 seconds for MQTT to be ready
+
+3. Install Zigbee2MQTT:
+   POST /api/addons/a0d7b954_zigbee2mqtt/install
+   
+4. Configure Z2M to use local MQTT:
+   POST /api/addons/a0d7b954_zigbee2mqtt/options
+   Body: {
+     "options": {
+       "mqtt": {
+         "server": "mqtt://core-mosquitto"
+       }
+     }
+   }
+
+5. Start Zigbee2MQTT:
+   POST /api/addons/a0d7b954_zigbee2mqtt/start
+
+6. Install Node-RED (optional):
+   POST /api/addons/a0d7b954_nodered/install
+   POST /api/addons/a0d7b954_nodered/start
+```
+
+### Use Case 3: Troubleshoot Add-on
+
+**User:** "My Zigbee2MQTT isn't working"
+
+**You should:**
+```
+1. Check add-on state:
+   GET /api/addons/a0d7b954_zigbee2mqtt/info
+   (Look at "state": "started" or "stopped")
+
+2. Check logs:
+   GET /api/addons/a0d7b954_zigbee2mqtt/logs?lines=100
+   (Look for errors like "Failed to connect to /dev/ttyUSB0")
+
+3. Identify issue:
+   - Wrong serial port → reconfigure options
+   - Add-on not started → start it
+   - Permission issues → check system logs
+
+4. Fix and restart:
+   POST /api/addons/a0d7b954_zigbee2mqtt/restart
+
+5. Verify fix:
+   GET /api/addons/a0d7b954_zigbee2mqtt/logs?lines=50
+```
+
+## ⚠️ IMPORTANT NOTES
+
+**Add-on slugs:**
+- Official core add-ons use format: `core_{name}`
+- Community add-ons use format: `{repo_id}_{name}`
+- To find exact slug: `GET /api/addons/available`
+
+**Installation times:**
+- Small add-ons (Mosquitto): 1-2 minutes
+- Medium add-ons (Zigbee2MQTT): 3-5 minutes
+- Large add-ons (Node-RED, ESPHome): 5-10 minutes
+- **Always inform user about expected wait time**
+
+**Configuration:**
+- Most add-ons need configuration before first start
+- Configuration changes require restart
+- Check add-on documentation for required options
+- Use `GET /api/addons/{slug}/info` to see current options
+
+**Ports and URLs:**
+- Add-ons with web UI: http://homeassistant.local:8099/hassio/ingress/{slug}
+- Some add-ons expose direct ports (check documentation)
+- MQTT typically runs on port 1883 internally
+
+**Security:**
+- Only install add-ons from official or trusted repositories
+- Some add-ons require system privileges
+- Always check logs after installation
+
+## 🐛 TROUBLESHOOTING
+
+**If add-on won't install:**
+- Check available disk space
+- Verify network access
+- Check supervisor logs: GET /api/logs/
+
+**If add-on won't start:**
+- Check configuration options are valid
+- Check logs for specific error: GET /api/addons/{slug}/logs
+- Verify dependencies (e.g., Zigbee2MQTT needs MQTT broker)
+
+**If add-on crashes after start:**
+- Check hardware access (USB devices for Zigbee/Z-Wave)
+- Check port conflicts
+- Verify configuration options
 
 ================================================================================
 🌡️ CLIMATE CONTROL SYSTEMS - CRITICAL EDGE CASES

@@ -2,6 +2,103 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2025-11-09
+
+### 🚀 MAJOR: Complete Add-on Management (Phase 1.2) 🔥
+
+**Full add-on lifecycle management** - Install, configure, and control Home Assistant add-ons!
+
+### What's New
+
+**Add-on Management:**
+- ✅ List all available and installed add-ons
+- ✅ Install/uninstall add-ons (Zigbee2MQTT, Node-RED, ESPHome, etc)
+- ✅ Start/stop/restart add-ons
+- ✅ Configure add-on options
+- ✅ Update add-ons to latest versions
+- ✅ Read add-on logs for troubleshooting
+- ✅ Powered by Supervisor API
+
+**12 New API Endpoints:**
+- `GET /api/addons/available` - List all add-ons
+- `GET /api/addons/installed` - List installed add-ons
+- `GET /api/addons/{slug}/info` - Get add-on details
+- `GET /api/addons/{slug}/logs` - Get add-on logs
+- `POST /api/addons/{slug}/install` - Install add-on
+- `POST /api/addons/{slug}/uninstall` - Uninstall add-on
+- `POST /api/addons/{slug}/start` - Start add-on
+- `POST /api/addons/{slug}/stop` - Stop add-on
+- `POST /api/addons/{slug}/restart` - Restart add-on
+- `POST /api/addons/{slug}/update` - Update add-on
+- `GET /api/addons/{slug}/options` - Get configuration
+- `POST /api/addons/{slug}/options` - Set configuration
+
+**12 New MCP Tools:**
+- `ha_list_addons` - List all add-ons
+- `ha_list_installed_addons` - List installed only
+- `ha_addon_info` - Get add-on details
+- `ha_addon_logs` - Read logs
+- `ha_install_addon` - Install add-on
+- `ha_uninstall_addon` - Uninstall add-on
+- `ha_start_addon` - Start service
+- `ha_stop_addon` - Stop service
+- `ha_restart_addon` - Restart service
+- `ha_update_addon` - Update add-on
+- `ha_get_addon_options` - Get configuration
+- `ha_set_addon_options` - Set configuration
+
+**AI Instructions:**
+- ✅ Comprehensive add-on management guide
+- ✅ Common add-on slugs (Mosquitto, Zigbee2MQTT, Node-RED)
+- ✅ 3 detailed use cases with workflows
+- ✅ Installation time expectations
+- ✅ Troubleshooting guide
+
+**Technical Implementation:**
+- New `SupervisorClient` service (`app/services/supervisor_client.py`)
+- Full Supervisor API integration
+- Timeout handling for long operations (install/update)
+- Error handling and user-friendly messages
+
+### Use Cases Now Supported
+
+**"Install Zigbee2MQTT for my Sonoff dongle"**
+- Installs add-on (3-5 minutes)
+- Auto-detects USB device
+- Configures serial port
+- Starts service
+- Monitors logs
+- Guides user to web UI
+
+**"Setup complete smart home infrastructure"**
+- Install Mosquitto MQTT broker
+- Install Zigbee2MQTT
+- Install Node-RED
+- Configure integrations
+- Start all services
+
+**"My Zigbee2MQTT isn't working - help"**
+- Check add-on state
+- Read logs
+- Identify issue
+- Fix configuration
+- Restart service
+- Verify fix
+
+### Roadmap Progress
+
+- ✅ **Phase 1.1**: HACS Management (v2.2.0)
+- ✅ **Phase 1.2**: Add-on Management (v2.3.0)  ← YOU ARE HERE
+- 🔜 **Phase 1.3**: Enhanced Backup Management
+- 🔜 **Phase 2.1**: Lovelace Dashboard Generator
+- 🔜 **Phase 2.2**: Zigbee2MQTT Helper
+
+**Impact:**
+- Enables one-click infrastructure setup
+- Simplifies Zigbee/MQTT configuration
+- Automates add-on troubleshooting
+- #2 most requested feature delivered!
+
 ## [2.2.3] - 2025-11-09
 
 ### 📝 Documentation Improvements
