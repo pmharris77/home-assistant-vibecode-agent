@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.14] - 2025-11-09
+
+### 🐛 Bug Fix
+
+**Fixed Repository Parsing Logic (Complete Fix):**
+- ✅ Fixed parsing error for all Supervisor API response formats
+- ✅ Handles 4 different response formats correctly
+- ✅ No more `'list' object has no attribute 'get'` errors
+
+**Root cause found:**
+- Supervisor API returns: `{'data': [...list...]}`
+- Old code: `result.get('data', {}).get('repositories')`
+- If `data` is list: `[...].get('repositories')` → ERROR!
+
+**Complete fix - handles all formats:**
+1. Direct list: `[...]`
+2. Dict with repositories: `{'repositories': [...]}`
+3. Dict with data as list: `{'data': [...]}`
+4. Dict with nested data: `{'data': {'repositories': [...]}}`
+
+**Impact:**
+- Repository management now fully functional
+- All Supervisor API response formats handled correctly
+
+## [2.3.13] - 2025-11-09
+
+### 🔍 Feature: MCP Client Version Tracking
+
+**Added MCP version logging:**
+- ✅ Middleware logs MCP client version on first request
+- ✅ Reads X-MCP-Client-Version header from MCP client
+- ✅ Shows: `🔌 MCP Client connected: v2.3.4 from 192.168.68.63`
+- ✅ Logs once per client IP (avoids spam)
+
+**Benefits:**
+- See which MCP version is connecting
+- Identify version mismatches
+- Better debugging capabilities
+
+## [2.3.12] - 2025-11-09
+
+### 🔧 Maintenance
+
+**Force Docker rebuild:**
+- Version increment to trigger Home Assistant rebuild
+- Ensures repository parsing fix is applied
+
 ## [2.3.11] - 2025-11-09
 
 ### 🐛 Bug Fix

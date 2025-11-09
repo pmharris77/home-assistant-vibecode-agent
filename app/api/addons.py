@@ -410,11 +410,22 @@ async def list_repositories():
         supervisor = await get_supervisor_client()
         result = await supervisor.list_repositories()
         
-        # Supervisor API may return dict with 'data' or list directly
+        # Supervisor API may return different formats
         if isinstance(result, list):
+            # Format 1: Direct list
             repos = result
         elif isinstance(result, dict):
-            repos = result.get('data', {}).get('repositories', result.get('repositories', []))
+            # Format 2: {'repositories': [...]}
+            if 'repositories' in result:
+                repos = result['repositories']
+            # Format 3: {'data': [...]} (data is list)
+            elif 'data' in result and isinstance(result['data'], list):
+                repos = result['data']
+            # Format 4: {'data': {'repositories': [...]}}
+            elif 'data' in result and isinstance(result['data'], dict):
+                repos = result['data'].get('repositories', [])
+            else:
+                repos = []
         else:
             repos = []
         
