@@ -11,7 +11,7 @@ from typing import Optional
 from app.models.schemas import Response
 from app.services.ha_client import ha_client
 from app.services.ha_websocket import get_ws_client
-from app.main import verify_token
+from app.auth import verify_token
 
 router = APIRouter()
 logger = logging.getLogger('ha_cursor_agent')

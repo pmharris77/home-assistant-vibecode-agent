@@ -16,6 +16,7 @@ from app.api import files, entities, helpers, automations, scripts, system, back
 from app.utils.logger import setup_logger
 from app.ingress_panel import generate_ingress_html
 from app.services import ha_websocket
+from app.auth import verify_token, set_api_key, security
 
 # Setup logging
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'info').upper()
@@ -41,9 +42,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Security
-security = HTTPBearer()
 
 # Get tokens and configuration from environment
 SUPERVISOR_TOKEN = os.getenv('SUPERVISOR_TOKEN', '')  # Auto-provided by HA when running as add-on
@@ -141,6 +139,7 @@ def get_or_generate_api_key():
 
 # Initialize API key
 API_KEY = get_or_generate_api_key()
+set_api_key(API_KEY)  # Set API key in auth module
 
 # Log startup configuration
 supervisor_token_status = "PRESENT" if SUPERVISOR_TOKEN else "MISSING"
@@ -185,37 +184,6 @@ async def shutdown_event():
         logger.info("✅ WebSocket client stopped")
 
 
-async def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """
-    Verify API key.
-    
-    Add-on mode (SUPERVISOR_TOKEN exists):
-    - Validates against configured API_KEY
-    - Agent uses SUPERVISOR_TOKEN internally for all HA API operations
-    
-    Development mode (no SUPERVISOR_TOKEN):
-    - Validates against DEV_TOKEN environment variable
-    """
-    token = credentials.credentials
-    token_preview = f"{token[:20]}..." if len(token) > 20 else token
-    
-    if SUPERVISOR_TOKEN:
-        # Add-on mode: Check against API_KEY
-        if token != API_KEY:
-            logger.warning(f"❌ Invalid API key: {token_preview}")
-            raise HTTPException(status_code=401, detail="Invalid API key")
-        
-        logger.debug(f"✅ API key validated: {token_preview}")
-        logger.debug(f"Agent will use SUPERVISOR_TOKEN for HA API operations")
-        return token
-    else:
-        # Development mode: Check against DEV_TOKEN
-        logger.debug(f"Development mode: Checking token against DEV_TOKEN")
-        if not DEV_TOKEN or token != DEV_TOKEN:
-            logger.warning(f"❌ Token mismatch in development mode")
-            raise HTTPException(status_code=401, detail="Invalid authentication token")
-        logger.info(f"✅ Token validated in development mode")
-        return token
 
 
 # Include routers
