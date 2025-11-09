@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.12] - 2025-11-08
+
+### Changed
+- **Improved Ingress Panel UX** - complete redesign focused on user workflow
+  - **Primary focus:** Ready-to-use JSON configuration (copy entire config)
+  - **One-click copy:** "Copy Configuration to Clipboard" button
+  - **Clear steps:** Step-by-step instructions for Cursor setup
+  - **Advanced section:** API key view/regenerate moved to collapsed section
+  - **Better flow:** User copies JSON → pastes → restarts Cursor → done!
+
+### Added
+- New `ingress_panel.py` module for cleaner HTML template management
+- Advanced section with key visibility toggle
+- Regenerate key button (UI prepared, backend TBD)
+
+### UX Improvements
+- No need to manually construct JSON - it's ready to copy
+- Masked key by default in advanced section
+- Clear visual hierarchy (config first, key details later)
+
 ## [1.0.11] - 2025-11-08
 
 ### Changed

@@ -14,13 +14,14 @@ from fastapi.responses import JSONResponse, HTMLResponse
 
 from app.api import files, entities, helpers, automations, scripts, system, backup, logs, ai_instructions
 from app.utils.logger import setup_logger
+from app.ingress_panel import generate_ingress_html
 
 # Setup logging
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'info').upper()
 logger = setup_logger('ha_cursor_agent', LOG_LEVEL)
 
 # Agent version
-AGENT_VERSION = "1.0.11"
+AGENT_VERSION = "1.0.12"
 
 # FastAPI app
 app = FastAPI(
@@ -205,7 +206,13 @@ app.include_router(ai_instructions.router, prefix="/api/ai")
 
 @app.get("/", response_class=HTMLResponse)
 async def ingress_panel():
-    """Ingress panel - shows API key and setup instructions"""
+    """Ingress panel - shows ready-to-use JSON config"""
+    return generate_ingress_html(API_KEY, AGENT_VERSION)
+
+
+@app.get("/old", response_class=HTMLResponse)
+async def old_ingress_panel():
+    """Old ingress panel (deprecated)"""
     
     # Mask API key for display (show first 8 and last 8 chars)
     masked_key = f"{API_KEY[:8]}...{API_KEY[-8:]}" if len(API_KEY) > 16 else API_KEY
