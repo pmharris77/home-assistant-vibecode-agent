@@ -12,9 +12,31 @@ AI_INSTRUCTIONS = """
 HA CURSOR AGENT - INSTRUCTIONS FOR AI ASSISTANTS
 ================================================================================
 
-Version: 2.3.8
+Version: 2.3.15
 Base URL: http://homeassistant.local:8099
 Interactive Docs: http://homeassistant.local:8099/docs
+
+================================================================================
+VERSION TRACKING
+================================================================================
+
+**Agent and MCP Version Compatibility:**
+
+- Agent logs MCP client version on connection: 🔌 MCP Client connected: v2.3.x
+- Check logs to see which MCP version is connecting
+- Agent v2.3.15+ requires MCP v2.3.5+ for store catalog features
+- Agent v2.3.13+ logs MCP version in middleware
+
+**How to check versions:**
+1. Agent version: shown in startup logs (HA Cursor Agent vX.Y.Z)
+2. MCP version: shown when MCP connects (🔌 MCP Client connected: vX.Y.Z)
+3. Both versions visible in: GET /api/logs/
+
+**Version compatibility:**
+- Agent v2.3.15 + MCP v2.3.5 = Full store catalog support
+- Agent v2.3.14 + MCP v2.3.4 = Repository management
+- Agent v2.3.10 + MCP v2.3.3 = Basic add-on management
+- Agent v2.2.x + MCP v2.2.x = HACS management only
 
 ================================================================================
 CRITICAL: READ THESE INSTRUCTIONS BEFORE MAKING ANY CHANGES
