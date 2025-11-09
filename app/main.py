@@ -20,7 +20,7 @@ LOG_LEVEL = os.getenv('LOG_LEVEL', 'info').upper()
 logger = setup_logger('ha_cursor_agent', LOG_LEVEL)
 
 # Agent version
-AGENT_VERSION = "1.0.10"
+AGENT_VERSION = "1.0.11"
 
 # FastAPI app
 app = FastAPI(
@@ -45,7 +45,8 @@ security = HTTPBearer()
 
 # Get tokens and configuration from environment
 SUPERVISOR_TOKEN = os.getenv('SUPERVISOR_TOKEN', '')  # Auto-provided by HA when running as add-on
-DEV_TOKEN = os.getenv('HA_TOKEN', '')  # For local development only
+# Support both new and old env var names for backward compatibility
+DEV_TOKEN = os.getenv('HA_AGENT_KEY') or os.getenv('HA_TOKEN', '')  # For local development only
 HA_URL = os.getenv('HA_URL', 'http://supervisor/core')
 
 # API Key configuration
@@ -116,7 +117,7 @@ def get_or_generate_api_key():
     logger.info("")
     logger.info("📋 Copy this key to ~/.cursor/mcp.json:")
     logger.info('  "env": {')
-    logger.info(f'    "HA_TOKEN": "{api_key}"')
+    logger.info(f'    "HA_AGENT_KEY": "{api_key}"')
     logger.info('  }')
     logger.info("")
     logger.info("💡 You can also view it anytime in: Sidebar → API Key")
@@ -457,7 +458,7 @@ async def ingress_panel():
       "args": ["-y", "@coolver/mcp-home-assistant@latest"],
       "env": {{
         "HA_AGENT_URL": "http://homeassistant.local:8099",
-        "HA_TOKEN": "YOUR_API_KEY_HERE"
+        "HA_AGENT_KEY": "YOUR_API_KEY_HERE"
       }}
     }}
   }}

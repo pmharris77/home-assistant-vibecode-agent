@@ -6,7 +6,7 @@ Stop manually writing YAML configurations! This add-on enables Cursor AI to anal
 
 **Real example:** User says *"Install smart climate control"* → AI analyzes 7 TRVs, creates 10 automations + 9 helpers + 10 sensors + 5 scripts, deploys everything, and it just works!
 
-[![Version](https://img.shields.io/badge/version-1.0.10-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
+[![Version](https://img.shields.io/badge/version-1.0.11-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![MCP Package](https://img.shields.io/npm/v/@coolver/mcp-home-assistant?label=MCP%20Package)](https://www.npmjs.com/package/@coolver/mcp-home-assistant)
 
@@ -144,7 +144,7 @@ Add to your `~/.cursor/mcp.json`:
       "args": ["-y", "@coolver/mcp-home-assistant@latest"],
       "env": {
         "HA_AGENT_URL": "http://homeassistant.local:8099",
-        "HA_TOKEN": "YOUR_API_KEY_HERE"
+        "HA_AGENT_KEY": "YOUR_API_KEY_HERE"
       }
     }
   }

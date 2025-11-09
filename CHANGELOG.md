@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - 2025-11-08
+
+### Changed
+- **Renamed environment variable** - `HA_TOKEN` → `HA_AGENT_KEY` (more accurate naming)
+- **Backward compatible** - agent still accepts old `HA_TOKEN` name
+- **Updated all documentation** - shows `HA_AGENT_KEY` in examples
+- **Updated Ingress Panel** - displays `HA_AGENT_KEY` in setup instructions
+- **Updated MCP client** - accepts both `HA_AGENT_KEY` and `HA_TOKEN`
+
+### Migration
+- **Recommended:** Update `~/.cursor/mcp.json` to use `HA_AGENT_KEY` instead of `HA_TOKEN`
+- **Optional:** Old `HA_TOKEN` still works for backward compatibility
+
 ## [1.0.10] - 2025-11-08
 
 ### Fixed
