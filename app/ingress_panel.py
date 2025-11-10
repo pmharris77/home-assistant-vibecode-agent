@@ -10,7 +10,7 @@ def generate_ingress_html(api_key: str, agent_version: str) -> str:
   "mcpServers": {{
     "home-assistant": {{
       "command": "npx",
-      "args": ["-y", "@coolver/mcp-home-assistant@latest"],
+      "args": ["-y", "@coolver/home-assistant-mcp@latest"],
       "env": {{
         "HA_AGENT_URL": "http://homeassistant.local:8099",
         "HA_AGENT_KEY": "{api_key}"

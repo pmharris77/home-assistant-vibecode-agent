@@ -13,9 +13,9 @@ No more manual YAML editing or searching through documentation - just describe w
 
 **Real example:** User says *"Install smart climate control"* → AI analyzes 7 TRVs, creates 10 automations + 9 helpers + 10 sensors + 5 scripts, deploys everything, and it just works!
 
-[![Version](https://img.shields.io/badge/version-2.5.4-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
+[![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](https://github.com/Coolver/home-assistant-cursor-agent)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![MCP Package](https://img.shields.io/npm/v/@coolver/mcp-home-assistant?label=MCP%20Package)](https://www.npmjs.com/package/@coolver/mcp-home-assistant)
+[![MCP Package](https://img.shields.io/npm/v/@coolver/home-assistant-mcp?label=MCP%20Package)](https://www.npmjs.com/package/@coolver/home-assistant-mcp)
 
 ---
 
@@ -154,7 +154,7 @@ No more manual YAML editing or searching through documentation - just describe w
   "mcpServers": {
     "home-assistant": {
       "command": "npx",
-      "args": ["-y", "@coolver/mcp-home-assistant@latest"],
+      "args": ["-y", "@coolver/home-assistant-mcp@latest"],
       "env": {
         "HA_AGENT_URL": "http://homeassistant.local:8099",
         "HA_AGENT_KEY": "YOUR_API_KEY_HERE"
@@ -226,7 +226,7 @@ Cursor AI will autonomously read your configuration, create components, and depl
 
 **That's it!** Cursor AI will use the MCP protocol to communicate with your Home Assistant.
 
-**Learn more:** [MCP Home Assistant on GitHub](https://github.com/Coolver/home-assistant-mcp) | [NPM Package](https://www.npmjs.com/package/@coolver/mcp-home-assistant)
+**Learn more:** [MCP Home Assistant on GitHub](https://github.com/Coolver/home-assistant-mcp) | [NPM Package](https://www.npmjs.com/package/@coolver/home-assistant-mcp)
 
 ### Real-World Examples
 
