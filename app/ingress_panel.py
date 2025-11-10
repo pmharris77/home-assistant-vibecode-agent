@@ -629,10 +629,21 @@ def generate_ingress_html(api_key: str, agent_version: str) -> str:
                 text.textContent = 'Regenerating...';
                 
                 try {{
-                    const response = await fetch('/api/regenerate-key', {{
+                    // Use relative path that works through ingress
+                    const response = await fetch('api/regenerate-key', {{
                         method: 'POST',
                         headers: {{'Content-Type': 'application/json'}}
                     }});
+                    
+                    if (!response.ok) {{
+                        throw new Error(`HTTP ${{response.status}}: ${{response.statusText}}`);
+                    }}
+                    
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {{
+                        const text = await response.text();
+                        throw new Error('Response is not JSON: ' + text.substring(0, 100));
+                    }}
                     
                     const result = await response.json();
                     
