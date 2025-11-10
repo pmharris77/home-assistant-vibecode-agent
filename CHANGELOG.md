@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.4] - 2025-11-10
+
+### 🐛 Bug Fix: Git Rollback Endpoint
+
+**Fixed 404 error when rolling back via MCP tools**
+
+**Bug:**
+- MCP calls: `POST /api/backup/rollback/{commit_hash}` (path param)
+- API expected: `POST /api/backup/rollback` + body
+- Result: 404 Not Found
+
+**Fix:**
+- Added path parameter endpoint: `/rollback/{commit_hash}`
+- Kept body parameter endpoint for compatibility
+- Both versions now work
+
+**API Endpoints:**
+```
+✅ POST /api/backup/rollback/abc123 (path param - for MCP)
+✅ POST /api/backup/rollback + body (legacy - for direct API calls)
+```
+
+**Impact:**
+- ✅ Git rollback works from AI
+- ✅ Can restore previous configurations
+- ✅ Both calling styles supported
+
+**Version:** 2.7.4 (PATCH - bug fix)
+
 ## [2.7.3] - 2025-11-10
 
 ### ✨ Feature: Dashboard Validation + Detailed Errors
