@@ -31,9 +31,6 @@ def generate_ingress_html(api_key: str, agent_version: str) -> str:
   }}
 }}'''
     
-    # Masked key for display
-    masked_key = f"{api_key[:12]}...{api_key[-12:]}" if len(api_key) > 24 else api_key
-    
     # Load Jinja2 template
     template_path = Path(__file__).parent / 'templates' / 'ingress_panel.html'
     template_content = template_path.read_text(encoding='utf-8')
@@ -43,8 +40,7 @@ def generate_ingress_html(api_key: str, agent_version: str) -> str:
     html = template.render(
         api_key=api_key,
         agent_version=agent_version,
-        json_config=json_config,
-        masked_key=masked_key
+        json_config=json_config
     )
     
     return html
