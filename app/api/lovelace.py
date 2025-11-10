@@ -17,6 +17,33 @@ router = APIRouter()
 
 # ==================== Helper Functions ====================
 
+def _validate_dashboard_filename(filename: str) -> tuple[bool, str]:
+    """
+    Validate dashboard filename meets HA requirements
+    
+    Args:
+        filename: Dashboard filename (e.g., "heating-now.yaml")
+        
+    Returns:
+        (is_valid, error_message)
+    """
+    # Remove .yaml/.yml extension for validation
+    name_without_ext = filename.replace('.yaml', '').replace('.yml', '')
+    
+    # Check for hyphen
+    if '-' not in name_without_ext:
+        return False, f"Dashboard filename must contain a hyphen (-). Got: '{name_without_ext}'. Try: '{name_without_ext}-dashboard' or convert to kebab-case (e.g., 'my-dashboard')."
+    
+    # Check for invalid characters (spaces, special chars)
+    if ' ' in name_without_ext:
+        return False, f"Dashboard filename cannot contain spaces. Got: '{name_without_ext}'. Use hyphens instead (e.g., 'heating-now')."
+    
+    # Check for uppercase
+    if name_without_ext != name_without_ext.lower():
+        return False, f"Dashboard filename should be lowercase. Got: '{name_without_ext}'. Use lowercase: '{name_without_ext.lower()}'."
+    
+    return True, ""
+
 async def _rollback_on_error(backup_commit: str, error_msg: str) -> None:
     """
     Automatically rollback changes if error occurred
@@ -276,6 +303,24 @@ async def apply_dashboard(request: ApplyDashboardRequest):
     """
     try:
         logger.info("Applying dashboard configuration")
+        
+        # Validate filename first
+        is_valid, error_msg = _validate_dashboard_filename(request.filename)
+        if not is_valid:
+            logger.error(f"Invalid dashboard filename: {error_msg}")
+            return Response(
+                success=False,
+                message=error_msg,
+                data=None
+            )
+        
+        # Check if dashboard already exists
+        dashboard_key = request.filename.replace('.yaml', '').replace('.yml', '')
+        config_content = await file_manager.read_file("configuration.yaml")
+        
+        if f'{dashboard_key}:' in config_content:
+            logger.warning(f"Dashboard '{dashboard_key}' already exists in configuration.yaml")
+            # Note: We allow overwriting, but log it
         
         # Create backup if requested
         if request.create_backup:

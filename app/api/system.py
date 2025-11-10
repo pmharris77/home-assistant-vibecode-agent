@@ -46,11 +46,25 @@ async def check_config():
     """
     Check Home Assistant configuration validity
     
-    Returns validation results
+    Returns validation results with detailed error messages (like Developer Tools → Check Configuration)
     """
     try:
         result = await ha_client.check_config()
         logger.info("Configuration check completed")
+        
+        # Check if result contains errors
+        if isinstance(result, dict) and 'errors' in result and result['errors']:
+            # Configuration has errors
+            errors = result['errors']
+            error_summary = "\n".join(errors) if isinstance(errors, list) else str(errors)
+            
+            logger.error(f"Configuration has {len(errors) if isinstance(errors, list) else 'some'} errors")
+            
+            return Response(
+                success=False,
+                message=f"Configuration invalid!\n\n{error_summary}",
+                data=result
+            )
         
         return Response(
             success=True,
@@ -59,9 +73,23 @@ async def check_config():
         )
     except Exception as e:
         logger.error(f"Configuration check failed: {e}")
+        
+        # Try to extract detailed error from exception
+        error_msg = str(e)
+        
+        # If it's HA API error with response data, try to parse it
+        if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            try:
+                import json
+                error_data = json.loads(e.response.text)
+                if 'message' in error_data:
+                    error_msg = error_data['message']
+            except:
+                pass
+        
         return Response(
             success=False,
-            message=f"Configuration has errors: {e}",
+            message=f"Configuration check failed: {error_msg}",
             data=None
         )
 

@@ -9,6 +9,50 @@ Agent only provides entity data and applies final YAML.
 
 When user asks to create dashboard, follow this dialog:
 
+### STEP 0: Pre-Creation Checks (MANDATORY!)
+
+**Before creating any dashboard:**
+
+1. **Check if dashboard already exists:**
+   ```
+   ha_preview_dashboard
+   ha_list_files (directory="/")
+   ```
+   - Look for existing .yaml dashboard files
+   - Check configuration.yaml for registered dashboards
+   - If exists: Ask user if they want to overwrite or use different name
+
+2. **Validate dashboard filename:**
+   ```
+   ⚠️ CRITICAL: Dashboard URL path MUST contain a hyphen (-)!
+   
+   ❌ BAD:  "heating" (no hyphen)
+   ❌ BAD:  "stat" (no hyphen)
+   ❌ BAD:  "climate" (no hyphen)
+   
+   ✅ GOOD: "heating-now"
+   ✅ GOOD: "climate-control"
+   ✅ GOOD: "my-dashboard"
+   ```
+   
+   **Rules:**
+   - If user suggests name without hyphen (e.g., "Heating Now")
+   - Convert to kebab-case: "heating-now" ✅
+   - If single word: add "-dashboard": "heating" → "heating-dashboard"
+   - Always confirm filename with user before proceeding
+
+3. **Example dialog:**
+   ```
+   User: "Create dashboard called 'Heating'"
+   
+   AI: "I'll create a dashboard for you. 
+   
+   Note: Home Assistant requires dashboard filenames to contain a hyphen.
+   I suggest: 'heating-dashboard.yaml'
+   
+   Or would you prefer: 'heating-monitor', 'heating-control', or another name?"
+   ```
+
 ### STEP 1: Understand Requirements
 
 Ask clarifying questions:
@@ -129,6 +173,7 @@ ha_apply_dashboard({
 - ✅ AI proposes before creating
 - ✅ Agent only applies (simple, reliable)
 - ✅ User gets custom dashboard, not template
+
 
 
 
