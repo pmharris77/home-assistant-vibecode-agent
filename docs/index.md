@@ -57,6 +57,20 @@ copying automations to the Home Assistant board, downloading logs, editing YAML 
 Before starting the second version, I decided I couldn't take it anymore —  
 and built tools to automate the entire process.
 
+<!-- Responsive YouTube embed (privacy mode) -->
+<div style="position:relative;padding-top:56.25%;margin:1.25rem 0;border-radius:12px;overflow:hidden">
+  <iframe
+    src="https://www.youtube-nocookie.com/embed/xocbWonWdoc?rel=0&modestbranding=1"
+    title="Control Home Assistant from Cursor – demo"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen
+    loading="lazy"
+    style="position:absolute;inset:0;width:100%;height:100%;border:0">
+  </iframe>
+</div>
+
+
 The system now consists of **two components**:
 
 - **Home Assistant Agent** — runs directly on the Home Assistant board (I tested it on the Raspberry Pi version).  
