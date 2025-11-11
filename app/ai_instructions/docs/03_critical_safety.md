@@ -164,6 +164,44 @@ After making changes, ALWAYS provide:
 
 ---
 
+## 6️⃣ GIT ROLLBACK WORKFLOW
+
+**When rolling back to previous commit:**
+
+1. **Check available commits:**
+   ```
+   ha_git_history (limit=20)
+   ```
+
+2. **Rollback to commit:**
+   ```
+   ha_git_rollback (commit_hash="abc123")
+   ```
+
+3. **⚠️ CRITICAL: Full restart required after rollback!**
+   ```
+   ha_restart
+   ```
+   
+   **Why full restart, not reload?**
+   - Rollback restores FILES (automations.yaml, dashboards, scripts, etc)
+   - Core reload only reloads configuration.yaml
+   - Full restart re-reads ALL files from disk
+   
+   **Do NOT use:**
+   - ❌ ha_reload_config (will miss file changes!)
+   - ❌ Component reloads (insufficient)
+   
+   **Always use:**
+   - ✅ ha_restart (full HA restart)
+
+4. **Wait for restart (~30-60 seconds)**
+
+5. **Verify changes applied:**
+   - Check files are restored
+   - Verify entities in UI
+   - Test functionality
+
 ## 🚫 NEVER DO THESE THINGS
 
 - ❌ Skip reading current configuration
@@ -171,6 +209,7 @@ After making changes, ALWAYS provide:
 - ❌ Modify production systems without backups
 - ❌ **Reload without checking config first** - ALWAYS check-config before reload!
 - ❌ **Auto-reload after every file write** - batch changes, reload once at the end
+- ❌ **Use reload after git rollback** - ALWAYS use full restart after rollback!
 - ❌ Ignore configuration check errors
 - ❌ Bulk-create entities without incremental testing
 - ❌ Assume your knowledge is current - USER'S FILES = SOURCE OF TRUTH
