@@ -322,31 +322,75 @@ async def delete_helper(entity_id: str):
                     else:
                         entries = []
                     
-                    # Find matching config entry by checking entity_id in options
+                    # Find matching config entry by checking entity_id in options or title
+                    logger.debug(f"Searching for config entry for {entity_id} (domain: {domain}, helper_id: {helper_id})")
+                    logger.debug(f"Found {len([e for e in entries if e.get('domain') == domain])} config entries for domain {domain}")
+                    
                     for entry in entries:
                         if entry.get('domain') == domain:
                             entry_id = entry.get('entry_id')
                             entry_title = entry.get('title', '')
+                            entry_options = entry.get('options', {})
                             
-                            # Try to match by title or by checking if entity_id matches
-                            # For input_text helpers, title often matches the name
-                            if entry_id and (helper_id.lower() in entry_title.lower() or entry_title.lower() in helper_id.lower()):
+                            # Try multiple matching strategies:
+                            # 1. Match by title (common for UI-created helpers)
+                            # 2. Match by entity_id in options
+                            # 3. Match by name in options
+                            # 4. Match by checking if helper_id appears in title (case-insensitive)
+                            matches = False
+                            
+                            # Strategy 1: Exact title match or helper_id in title
+                            if entry_title and (helper_id.lower() in entry_title.lower() or entry_title.lower() in helper_id.lower()):
+                                matches = True
+                                logger.debug(f"Match found by title: '{entry_title}' for {entity_id}")
+                            
+                            # Strategy 2: Check options for entity_id or name
+                            if not matches and entry_options:
+                                options_str = str(entry_options).lower()
+                                if helper_id.lower() in options_str or entity_id.lower() in options_str:
+                                    matches = True
+                                    logger.debug(f"Match found by options: {entry_options} for {entity_id}")
+                            
+                            # Strategy 3: For input_text, try matching by getting the actual entity and comparing
+                            if not matches and entry_id:
+                                # Try to get config entry details to see if it matches
+                                try:
+                                    entry_details = await ws_client._send_message({
+                                        'type': 'config/config_entries/get',
+                                        'entry_id': entry_id
+                                    })
+                                    if isinstance(entry_details, dict) and 'result' in entry_details:
+                                        entry_data = entry_details['result']
+                                        # Check if the entry's data matches our helper
+                                        entry_data_str = str(entry_data).lower()
+                                        if helper_id.lower() in entry_data_str or entity_id.lower() in entry_data_str:
+                                            matches = True
+                                            logger.debug(f"Match found by entry details for {entity_id}")
+                                except Exception as e:
+                                    logger.debug(f"Could not get entry details for {entry_id}: {e}")
+                            
+                            if matches and entry_id:
+                                logger.info(f"Attempting to delete config entry {entry_id} (title: '{entry_title}') for helper {entity_id}")
                                 # Delete config entry
                                 delete_result = await ws_client._send_message({
                                     'type': 'config/config_entries/delete',
                                     'entry_id': entry_id
                                 })
                                 
+                                logger.debug(f"Delete result for {entry_id}: {delete_result}")
+                                
                                 # Check if deletion was successful
                                 if isinstance(delete_result, dict) and delete_result.get('success', False):
                                     deleted_via_config_entry = True
-                                    logger.info(f"Deleted config entry {entry_id} for helper {entity_id}")
+                                    logger.info(f"✅ Deleted config entry {entry_id} for helper {entity_id}")
                                     break
                                 elif delete_result is None or (isinstance(delete_result, dict) and 'error' not in delete_result):
                                     # Some APIs return None on success
                                     deleted_via_config_entry = True
-                                    logger.info(f"Deleted config entry {entry_id} for helper {entity_id}")
+                                    logger.info(f"✅ Deleted config entry {entry_id} for helper {entity_id} (result: {delete_result})")
                                     break
+                                elif isinstance(delete_result, dict) and 'error' in delete_result:
+                                    logger.warning(f"Failed to delete config entry {entry_id}: {delete_result.get('error')}")
             except Exception as e:
                 logger.debug(f"Helper {entity_id} does not exist as entity: {e}")
         except Exception as e:
@@ -355,21 +399,25 @@ async def delete_helper(entity_id: str):
         # If neither method worked, check if helper actually exists
         if not deleted_via_yaml and not deleted_via_config_entry:
             # Check if helper exists in HA
+            helper_exists = False
             try:
                 state = await ha_client.get_state(entity_id)
                 if state:
-                    # Helper exists but we couldn't delete it - try direct API call
-                    # For config entry helpers, we need to find and delete the config entry
-                    # This is a fallback - user may need to delete manually via UI
-                    raise HTTPException(
-                        status_code=404, 
-                        detail=f"Helper {entity_id} exists but could not be deleted automatically. It may have been created via UI. Please delete manually via Settings → Helpers or try restarting Home Assistant after removing from YAML."
-                    )
+                    helper_exists = True
             except:
                 pass
             
-            if not deleted_via_yaml:
-                raise HTTPException(status_code=404, detail=f"Helper {entity_id} not found in {HELPER_FILES[domain]}")
+            if helper_exists:
+                # Helper exists but we couldn't delete it - provide helpful error message
+                logger.warning(f"Helper {entity_id} exists but could not be deleted automatically. Tried YAML and config entry methods.")
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"Helper {entity_id} exists but could not be deleted automatically. It may have been created via UI with a different configuration. Please delete manually via Settings → Helpers → {entity_id.split('.')[1].replace('_', ' ').title()} or try restarting Home Assistant."
+                )
+            else:
+                # Helper doesn't exist - return 404
+                if not deleted_via_yaml:
+                    raise HTTPException(status_code=404, detail=f"Helper {entity_id} not found in {HELPER_FILES[domain]} and does not exist as an entity")
         
         # Commit changes if YAML was modified
         if deleted_via_yaml and git_manager.enabled:
