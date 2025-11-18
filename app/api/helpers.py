@@ -411,8 +411,11 @@ async def delete_helper(entity_id: str):
                         'entity_id': entity_id
                     })
                     
+                    logger.debug(f"Entity registry get result for {entity_id}: {registry_result}")
+                    
                     if isinstance(registry_result, dict) and 'result' in registry_result:
                         registry_entry = registry_result['result']
+                        logger.debug(f"Registry entry for {entity_id}: {registry_entry}")
                         if registry_entry:
                             # Delete from entity registry
                             delete_registry_result = await ws_client._send_message({
@@ -420,14 +423,22 @@ async def delete_helper(entity_id: str):
                                 'entity_id': entity_id
                             })
                             
+                            logger.debug(f"Entity registry remove result for {entity_id}: {delete_registry_result}")
+                            
                             if isinstance(delete_registry_result, dict) and delete_registry_result.get('success', False):
                                 deleted_via_config_entry = True
                                 logger.info(f"✅ Deleted restored helper {entity_id} via entity registry")
                             elif delete_registry_result is None:
                                 deleted_via_config_entry = True
                                 logger.info(f"✅ Deleted restored helper {entity_id} via entity registry (result: None)")
+                            elif isinstance(delete_registry_result, dict):
+                                logger.warning(f"Entity registry remove returned: {delete_registry_result}")
+                        else:
+                            logger.debug(f"No registry entry found for {entity_id}")
+                    else:
+                        logger.debug(f"Unexpected registry result format for {entity_id}: {registry_result}")
             except Exception as e:
-                logger.debug(f"Could not delete via entity registry: {e}")
+                logger.warning(f"Could not delete via entity registry: {e}", exc_info=True)
         
         # If neither method worked, check if helper actually exists
         if not deleted_via_yaml and not deleted_via_config_entry:
