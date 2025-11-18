@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.5] - 2025-11-18
+
+### 🔧 IMPROVED: Helper Deletion for Restored Entities
+
+**Added support for deleting restored helpers via entity registry**
+
+**Changes:**
+- ✅ Added entity registry deletion for restored entities
+- ✅ Handles helpers with `restored: true` attribute
+- ✅ Uses `config/entity_registry/remove` API for cleanup
+- ✅ Supports deletion of helpers that were removed from config but still exist in database
+
+**Use Cases:**
+- Delete helpers that were removed from YAML but restored by Home Assistant
+- Clean up orphaned entities from entity registry
+- Complete cleanup of obsolete helpers
+
 ## [2.9.4] - 2025-11-18
 
 ### 🔧 IMPROVED: Helper Deletion Logic
