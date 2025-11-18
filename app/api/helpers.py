@@ -461,10 +461,10 @@ async def delete_helper(entity_id: str):
                         logger.warning(f"No registry entry found for {entity_id} (result was None or empty)")
                 else:
                     logger.warning(f"Unexpected registry result format for {entity_id}: {registry_result}")
-            except HTTPException:
-                raise
-            except Exception as e:
-                logger.warning(f"Could not delete via entity registry: {e}", exc_info=True)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"Could not delete via entity registry: {e}", exc_info=True)
         
         # If neither method worked, check if helper actually exists
         if not deleted_via_yaml and not deleted_via_config_entry:
