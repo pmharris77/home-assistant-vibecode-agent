@@ -125,6 +125,28 @@ class HomeAssistantClient:
             params['entity'] = entity_id
         
         return await self._request('GET', f'logbook/{start_time}', params=params)
+    
+    async def rename_entity(self, old_entity_id: str, new_entity_id: str) -> Dict:
+        """
+        Rename an entity_id via Entity Registry API
+        
+        Args:
+            old_entity_id: Current entity_id (e.g., 'climate.sonoff_trvzb_thermostat')
+            new_entity_id: New entity_id (e.g., 'climate.office_trv_thermostat')
+            
+        Returns:
+            Entity registry update result
+            
+        Raises:
+            Exception: If rename fails
+        """
+        endpoint = f"config/entity_registry/update/{old_entity_id}"
+        data = {
+            'new_entity_id': new_entity_id
+        }
+        
+        logger.info(f"Renaming entity: {old_entity_id} → {new_entity_id}")
+        return await self._request('POST', endpoint, data=data)
 
 # Global client instance
 ha_client = HomeAssistantClient()

@@ -130,3 +130,30 @@ async def call_service(
         logger.error(f"Failed to call service {domain}.{service}: {e}")
         raise HTTPException(status_code=500, detail=f"Service call failed: {str(e)}")
 
+@router.post("/rename")
+async def rename_entity(
+    old_entity_id: str = Body(..., description="Current entity_id (e.g., 'climate.sonoff_trvzb_thermostat')"),
+    new_entity_id: str = Body(..., description="New entity_id (e.g., 'climate.office_trv_thermostat')")
+):
+    """
+    Rename an entity_id via Entity Registry API
+    
+    This will update the entity_id in Home Assistant's entity registry.
+    Note: After renaming, you may need to reload automations/scripts that reference the entity.
+    
+    Example:
+    - {"old_entity_id": "climate.sonoff_trvzb_thermostat", "new_entity_id": "climate.office_trv_thermostat"}
+    """
+    try:
+        result = await ha_client.rename_entity(old_entity_id, new_entity_id)
+        logger.info(f"Renamed entity: {old_entity_id} → {new_entity_id}")
+        return {
+            "success": True,
+            "old_entity_id": old_entity_id,
+            "new_entity_id": new_entity_id,
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Failed to rename entity {old_entity_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to rename entity: {str(e)}")
+

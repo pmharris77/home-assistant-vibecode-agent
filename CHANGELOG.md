@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.13] - 2025-11-23
+
+### ✨ NEW: Entity Rename Functionality
+
+- ✅ Added `/api/entities/rename` endpoint to rename entity_id via Entity Registry API
+- ✅ Added `renameEntity` method to HA client
+- ✅ Added `ha_rename_entity` MCP tool for renaming entities through AI
+- ✅ Updated MCP package version to 3.2.4
+
+**Use Cases:**
+- Rename entities to more descriptive names (e.g., `climate.sonoff_trvzb_thermostat` → `climate.office_trv_thermostat`)
+- Standardize entity naming conventions across Home Assistant
+- Automate entity renaming workflows
+
 ## [2.9.12] - 2025-11-21
 
 ### ✨ NEW: Logbook API & MCP Tool
