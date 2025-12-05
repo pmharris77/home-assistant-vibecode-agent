@@ -138,10 +138,10 @@ You'll see this interface:
   <img src=".github/images/ingress-panel.jpg" alt="HA Cursor Agent Ingress Panel" width="700">
 </p>
 
-7. Click the Cursor or VS Code tab (depending on which IDE you want to use with Home Assistant) and follow the setup instructions. You’ll need to install and configure Cursor or VS Code so they can connect to the HA Agent via the MCP protocol.
+7. Click the **Cursor** or **VS Code** tab (depending on which IDE you want to use with Home Assistant) and **follow the setup instructions**. You’ll need to install and configure Cursor or VS Code so they can connect to the HA Agent via the MCP protocol.
 
-8. That’s it — you’re ready to start working with your Home Assistant scripts, automations and dashboards using AI.
-If you find this project useful and want to support its development, please consider giving it a [GitHub Star](https://github.com/Coolver/home-assistant-cursor-agent) ⭐
+8. That’s it — **you’re ready to start** working with your Home Assistant scripts, automations and dashboards using AI.
+If you find this project useful and want to support its development, **please consider giving it a [GitHub Star](https://github.com/Coolver/home-assistant-cursor-agent) ⭐**
 
 [YouTube Installation guide: how to install the Home Assistant Cursor Agent](https://youtu.be/RZNkNZnhMrc)
 
