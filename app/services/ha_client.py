@@ -79,8 +79,12 @@ class HomeAssistantClient:
         """Call a Home Assistant service"""
         endpoint = f"services/{domain}/{service}"
         # Some services require return_response parameter (e.g., file.read_file)
+        # Remove return_response from data if present (it should be a query param, not in body)
         params = {}
         if domain == 'file' and service == 'read_file':
+            # Remove return_response from data dict if it's there (should be query param)
+            if 'return_response' in data:
+                data = {k: v for k, v in data.items() if k != 'return_response'}
             params['return_response'] = True
         return await self._request('POST', endpoint, data, params=params)
     
