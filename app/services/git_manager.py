@@ -365,7 +365,7 @@ secrets.yaml
             if len(commits_to_keep) != commits_to_keep_count:
                 logger.warning(f"Expected {commits_to_keep_count} commits to keep, but got {len(commits_to_keep)}. Using what we have.")
             
-            logger.debug(f"Keeping {len(commits_to_keep)} commits: from {commits_to_keep[-1].hexsha[:8]} (oldest) to {commits_to_keep[0].hexsha[:8]} (newest)")
+            logger.info(f"Keeping {len(commits_to_keep)} commits: from {commits_to_keep[-1].hexsha[:8]} (oldest) to {commits_to_keep[0].hexsha[:8]} (newest)")
             
             try:
                 # Save current branch name
@@ -395,7 +395,7 @@ secrets.yaml
                 # Now cherry-pick all commits from oldest+1 to newest (in order)
                 # commits_to_keep is ordered newest to oldest, so we reverse it
                 commits_to_cherry_pick = list(reversed(commits_to_keep[:-1]))  # All except oldest
-                logger.debug(f"Cherry-picking {len(commits_to_cherry_pick)} commits (excluding oldest)")
+                logger.info(f"Cherry-picking {len(commits_to_cherry_pick)} commits (excluding oldest)")
                 
                 cherry_picked_count = 0
                 for commit in commits_to_cherry_pick:
@@ -415,7 +415,7 @@ secrets.yaml
                             pass
                         # Continue with next commit
                 
-                logger.debug(f"Cherry-picked {cherry_picked_count} commits. Total should be: 1 (oldest) + {cherry_picked_count} (cherry-picked) = {1 + cherry_picked_count}")
+                logger.info(f"Cherry-picked {cherry_picked_count} commits. Total should be: 1 (oldest) + {cherry_picked_count} (cherry-picked) = {1 + cherry_picked_count}")
                 
                 # Replace the original branch with the cleaned branch
                 self.repo.git.branch('-D', current_branch)
