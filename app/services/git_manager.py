@@ -411,6 +411,9 @@ secrets.yaml
                 self.repo.git.branch('-m', current_branch)
                 self.repo.git.checkout(current_branch)
                 
+                # Count commits in current branch BEFORE gc (should be commits_to_keep_count)
+                commits_after = len(list(self.repo.iter_commits(current_branch)))
+                
                 # Use simpler gc without aggressive pruning to avoid OOM
                 # This removes dangling objects (old unreachable commits)
                 try:
@@ -420,9 +423,12 @@ secrets.yaml
                     logger.warning(f"git gc failed: {gc_error}. Trying simpler cleanup...")
                     self.repo.git.prune('--expire=now')
                 
-                # Count commits in current branch only (not all commits in repo)
-                # After gc, old commits should be removed, so this should show correct count
-                commits_after = len(list(self.repo.iter_commits(current_branch)))
+                # Verify count after gc (should be the same)
+                commits_after_gc = len(list(self.repo.iter_commits(current_branch)))
+                if commits_after_gc != commits_after:
+                    logger.warning(f"Commit count changed after gc: {commits_after} → {commits_after_gc}")
+                    commits_after = commits_after_gc
+                
                 logger.info(f"✅ Automatic cleanup complete: {total_commits} → {commits_after} commits. Removed {total_commits - commits_after} old commits.")
                 
             except Exception as cleanup_error:
