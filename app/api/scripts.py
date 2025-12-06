@@ -1,5 +1,6 @@
 """Scripts API endpoints"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from typing import Optional
 import yaml
 import logging
 
@@ -59,6 +60,9 @@ async def create_script(config: dict):
     ```
     """
     try:
+        # Extract commit_message if present (may be added by MCP client)
+        commit_msg = config.pop('commit_message', None)
+        
         # Read existing scripts
         try:
             content = await file_manager.read_file('scripts.yaml')
@@ -91,8 +95,8 @@ async def create_script(config: dict):
         # Write back
         new_content = yaml.dump(scripts, allow_unicode=True, default_flow_style=False, sort_keys=False)
         script_alias = script_data.get('alias', entity_id)
-        # Try to get commit_message from config if ScriptData model was used
-        commit_msg = config.get('commit_message') or f"Create script: {script_alias}"
+        # Use provided commit_message or generate default
+        commit_msg = commit_msg or f"Create script: {script_alias}"
         await file_manager.write_file('scripts.yaml', new_content, create_backup=True, commit_message=commit_msg)
         
         # Reload
@@ -106,7 +110,7 @@ async def create_script(config: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/delete/{script_id}")
-async def delete_script(script_id: str):
+async def delete_script(script_id: str, commit_message: Optional[str] = Query(None, description="Custom commit message for Git backup")):
     """Delete script by ID"""
     try:
         content = await file_manager.read_file('scripts.yaml')
@@ -118,7 +122,7 @@ async def delete_script(script_id: str):
         del scripts[script_id]
         
         new_content = yaml.dump(scripts, allow_unicode=True, default_flow_style=False, sort_keys=False)
-        commit_msg = f"Delete script: {script_id}"
+        commit_msg = commit_message or f"Delete script: {script_id}"
         await file_manager.write_file('scripts.yaml', new_content, create_backup=True, commit_message=commit_msg)
         
         await ha_client.reload_component('scripts')

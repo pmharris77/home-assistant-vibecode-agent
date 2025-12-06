@@ -1,5 +1,6 @@
 """Automations API endpoints"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from typing import Optional
 import yaml
 import logging
 
@@ -101,7 +102,7 @@ async def create_automation(automation: AutomationData):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/delete/{automation_id}")
-async def delete_automation(automation_id: str):
+async def delete_automation(automation_id: str, commit_message: Optional[str] = Query(None, description="Custom commit message for Git backup")):
     """
     Delete automation by ID
     
@@ -122,7 +123,7 @@ async def delete_automation(automation_id: str):
         
         # Write back
         new_content = yaml.dump(automations, allow_unicode=True, default_flow_style=False, sort_keys=False)
-        commit_msg = f"Delete automation: {automation_id}"
+        commit_msg = commit_message or f"Delete automation: {automation_id}"
         await file_manager.write_file('automations.yaml', new_content, create_backup=True, commit_message=commit_msg)
         
         # Reload

@@ -1,9 +1,9 @@
 """Helpers API endpoints"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 import logging
 import os
 import yaml
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from app.models.schemas import HelperCreate, Response
 from app.services.ha_client import ha_client
@@ -257,7 +257,7 @@ async def create_helper(helper: HelperCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/delete/{entity_id}")
-async def delete_helper(entity_id: str):
+async def delete_helper(entity_id: str, commit_message: Optional[str] = Query(None, description="Custom commit message for Git backup")):
     """
     Delete input helper from YAML configuration or config entry
     
@@ -501,8 +501,9 @@ async def delete_helper(entity_id: str):
         
         # Commit changes if YAML was modified
         if deleted_via_yaml and git_manager.enabled:
+            commit_msg = commit_message or f"Delete helper: {entity_id}"
             await git_manager.commit_changes(
-                f"Delete helper: {entity_id}",
+                commit_msg,
                 skip_if_processing=True
             )
         
