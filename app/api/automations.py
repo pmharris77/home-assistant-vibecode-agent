@@ -78,8 +78,8 @@ async def create_automation(automation: AutomationData):
         if automation.id and any(a.get('id') == automation.id for a in automations):
             raise ValueError(f"Automation with ID '{automation.id}' already exists")
         
-        # Add new automation
-        new_automation = automation.model_dump(exclude_none=True)
+        # Add new automation (exclude commit_message as it's not part of automation config)
+        new_automation = automation.model_dump(exclude={'commit_message'}, exclude_none=True)
         automations.append(new_automation)
         
         # Write back
