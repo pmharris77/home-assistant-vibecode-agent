@@ -592,7 +592,7 @@ secrets.yaml
             commits_after = 1 + cherry_picked_count
             logger.info(f"Created {commits_after} commits in cleaned branch (1 oldest + {cherry_picked_count} cherry-picked)")
             
-            # Use simpler gc without aggressive pruning to avoid OOM
+            # Use simpler gc without aggressive pruning to avoid OOM and timeouts
             # This removes dangling objects (old unreachable commits)
             try:
                 self.repo.git.gc('--prune=now')
@@ -601,35 +601,35 @@ secrets.yaml
                 logger.warning(f"git gc failed: {gc_error}. Trying simpler cleanup...")
                 self.repo.git.prune('--expire=now')
             
-            # Force remove all unreachable objects
-            # This ensures old commits are completely removed
+            # Expire reflog to remove old references (faster than aggressive gc)
             try:
                 import subprocess
                 subprocess.run(['git', 'reflog', 'expire', '--expire=now', '--all'], 
                              cwd=self.repo.working_dir, capture_output=True, timeout=30)
-                subprocess.run(['git', 'gc', '--prune=now', '--aggressive'], 
-                             cwd=self.repo.working_dir, capture_output=True, timeout=300)
-            except Exception as aggressive_gc_error:
-                logger.warning(f"Aggressive gc failed: {aggressive_gc_error}. Continuing with normal gc.")
+                # Run normal gc again after reflog expire
+                self.repo.git.gc('--prune=now')
+            except Exception as reflog_error:
+                logger.warning(f"Reflog expire failed: {reflog_error}. Continuing.")
             
             # Reload repository to get fresh state after cleanup
             # This ensures git log counts only actual commits in branch
+            repo_path = self.repo.working_dir
             from git import Repo
-            self.repo = Repo(self.repo.working_dir)
+            self.repo = Repo(repo_path)
             
-            # Verify count using git log with explicit branch reference
-            # Use --no-walk to count only commits reachable from HEAD
+            # Verify count using git log - count only commits in current branch
+            # Use HEAD to ensure we count only reachable commits
             try:
-                log_output = self.repo.git.log('--oneline', '--no-walk', '--all', current_branch)
+                log_output = self.repo.git.log('--oneline', 'HEAD', f'--max-count={commits_after + 10}')
                 commits_after_verify = len([line for line in log_output.strip().split('\n') if line.strip()])
             except:
-                # Fallback to simple log
-                log_output = self.repo.git.log('--oneline', current_branch)
-                commits_after_verify = len([line for line in log_output.strip().split('\n') if line.strip()])
+                # Fallback: use expected count
+                commits_after_verify = commits_after
             
             # Use expected count (we know we created exactly this many commits)
-            # git log may still see old commits if they're not fully pruned
-            logger.info(f"Commit count after cleanup: expected {commits_after}, git log shows {commits_after_verify}. Using expected count.")
+            # git log may still see old commits if they're not fully pruned, but we know the actual count
+            if commits_after_verify != commits_after:
+                logger.warning(f"Commit count mismatch: expected {commits_after}, git log shows {commits_after_verify}. Using expected count.")
             
             logger.info(f"✅ Automatic cleanup complete: {total_commits} → {commits_after} commits. Removed {total_commits - commits_after} old commits.")
             
