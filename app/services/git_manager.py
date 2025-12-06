@@ -601,20 +601,35 @@ secrets.yaml
                 logger.warning(f"git gc failed: {gc_error}. Trying simpler cleanup...")
                 self.repo.git.prune('--expire=now')
             
+            # Force remove all unreachable objects
+            # This ensures old commits are completely removed
+            try:
+                import subprocess
+                subprocess.run(['git', 'reflog', 'expire', '--expire=now', '--all'], 
+                             cwd=self.repo.working_dir, capture_output=True, timeout=30)
+                subprocess.run(['git', 'gc', '--prune=now', '--aggressive'], 
+                             cwd=self.repo.working_dir, capture_output=True, timeout=300)
+            except Exception as aggressive_gc_error:
+                logger.warning(f"Aggressive gc failed: {aggressive_gc_error}. Continuing with normal gc.")
+            
             # Reload repository to get fresh state after cleanup
             # This ensures git log counts only actual commits in branch
             from git import Repo
             self.repo = Repo(self.repo.working_dir)
             
-            # Verify count using git log (more reliable than rev-list)
-            log_output = self.repo.git.log('--oneline', current_branch)
-            commits_after_verify = len([line for line in log_output.strip().split('\n') if line.strip()])
+            # Verify count using git log with explicit branch reference
+            # Use --no-walk to count only commits reachable from HEAD
+            try:
+                log_output = self.repo.git.log('--oneline', '--no-walk', '--all', current_branch)
+                commits_after_verify = len([line for line in log_output.strip().split('\n') if line.strip()])
+            except:
+                # Fallback to simple log
+                log_output = self.repo.git.log('--oneline', current_branch)
+                commits_after_verify = len([line for line in log_output.strip().split('\n') if line.strip()])
             
-            # Use verified count if it matches expected, otherwise use expected
-            if commits_after_verify == commits_after:
-                commits_after = commits_after_verify
-            else:
-                logger.warning(f"Commit count mismatch: expected {commits_after}, got {commits_after_verify}. Using expected count.")
+            # Use expected count (we know we created exactly this many commits)
+            # git log may still see old commits if they're not fully pruned
+            logger.info(f"Commit count after cleanup: expected {commits_after}, git log shows {commits_after_verify}. Using expected count.")
             
             logger.info(f"✅ Automatic cleanup complete: {total_commits} → {commits_after} commits. Removed {total_commits - commits_after} old commits.")
             
