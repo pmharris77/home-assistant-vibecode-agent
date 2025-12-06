@@ -525,6 +525,10 @@ secrets.yaml
                     commits_after = int(rev_list_output.strip())
                     logger.info(f"✅ Cleanup complete using format-patch method: {total_commits} → {commits_after} commits. Removed {total_commits - commits_after} old commits.")
                     
+                    # Update last known commit count after cleanup
+                    self.last_known_commit_count = commits_after
+                    return
+                    
             except Exception as format_patch_error:
                 logger.warning(f"format-patch method failed: {format_patch_error}. Falling back to orphan branch method.")
                 # Fallback to orphan branch method
