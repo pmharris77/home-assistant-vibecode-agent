@@ -42,6 +42,16 @@ class HomeAssistantClient:
         token_preview = f"{self.token[:20]}..." if self.token else "EMPTY"
         logger.debug(f"HA API Request: {method} {url}, Token: {token_preview}")
         
+        # For POST requests with query params, aiohttp might not handle them correctly
+        # Manually append query params to URL if needed
+        if params and method == 'POST':
+            from urllib.parse import urlencode
+            query_string = urlencode(params)
+            if query_string:
+                url = f"{url}?{query_string}"
+                logger.debug(f"Added query params to URL: {url}")
+                params = None  # Clear params to avoid double encoding
+        
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
