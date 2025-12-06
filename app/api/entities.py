@@ -105,12 +105,6 @@ async def call_service(
         data = {}
         if service_data:
             data.update(service_data)
-        
-        # Some services require return_response as query parameter, not in body
-        # Remove it from data if present (e.g., file.read_file)
-        # This must be done AFTER merging service_data and target
-        if domain == 'file' and service == 'read_file' and 'return_response' in data:
-            data = {k: v for k, v in data.items() if k != 'return_response'}
         if target:
             # Merge target fields into data (e.g., entity_id from target)
             if 'entity_id' in target:
@@ -122,6 +116,14 @@ async def call_service(
             # Also keep target for services that need it
             if not any(k in data for k in ['entity_id', 'area_id', 'device_id']):
                 data['target'] = target
+        
+        # Some services require return_response as query parameter, not in body
+        # Remove it from data if present (e.g., file.read_file)
+        # This must be done AFTER merging service_data and target
+        if domain == 'file' and service == 'read_file' and 'return_response' in data:
+            logger.debug(f"Removing return_response from data. Data keys: {list(data.keys())}")
+            data = {k: v for k, v in data.items() if k != 'return_response'}
+            logger.debug(f"Data after removal: {data}")
         
         result = await ha_client.call_service(domain, service, data)
         logger.info(f"Service called: {domain}.{service}")

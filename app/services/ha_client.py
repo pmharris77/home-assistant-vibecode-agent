@@ -84,8 +84,11 @@ class HomeAssistantClient:
         if domain == 'file' and service == 'read_file':
             # Remove return_response from data dict if it's there (should be query param)
             if 'return_response' in data:
+                logger.debug(f"ha_client: Removing return_response from data. Data keys before: {list(data.keys())}")
                 data = {k: v for k, v in data.items() if k != 'return_response'}
+                logger.debug(f"ha_client: Data keys after: {list(data.keys())}")
             params['return_response'] = True
+            logger.debug(f"ha_client: Added return_response=True to params. Data: {data}, Params: {params}")
         return await self._request('POST', endpoint, data, params=params)
     
     async def get_config(self) -> Dict:
