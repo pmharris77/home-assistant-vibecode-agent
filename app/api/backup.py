@@ -1,5 +1,6 @@
 """Backup/Restore API endpoints"""
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
+from typing import List, Optional
 import logging
 
 from app.models.schemas import BackupRequest, RollbackRequest, Response
@@ -190,5 +191,81 @@ async def end_checkpoint():
         }
     except Exception as e:
         logger.error(f"Failed to end checkpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/cleanup")
+async def cleanup_commits(delete_backup_branches: bool = True):
+    """
+    Manually cleanup old commits - keeps only last max_backups commits
+    
+    This function:
+    1. Removes old commits (keeps only last max_backups commits, typically 50)
+    2. Optionally deletes old backup_before_cleanup branches
+    
+    **Example:**
+    - POST `/api/backup/cleanup?delete_backup_branches=true`
+    """
+    try:
+        if not git_manager.enabled:
+            raise HTTPException(status_code=400, detail="Git versioning is not enabled")
+        
+        result = await git_manager.cleanup_commits(delete_backup_branches=delete_backup_branches)
+        
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail=result["message"])
+        
+        logger.info(f"Manual cleanup completed: {result['commits_before']} → {result['commits_after']} commits")
+        
+        return {
+            "success": True,
+            "message": result["message"],
+            "commits_before": result["commits_before"],
+            "commits_after": result["commits_after"],
+            "backup_branches_deleted": result["backup_branches_deleted"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to cleanup commits: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/restore", response_model=Response)
+async def restore_files(
+    commit_hash: Optional[str] = Body(None, description="Commit hash to restore from (default: HEAD)"),
+    file_patterns: Optional[List[str]] = Body(None, description="File patterns to restore (e.g., ['*.yaml', 'configuration.yaml']). If None, restores all tracked files")
+):
+    """
+    Restore files from a specific commit
+    
+    **⚠️ WARNING: This will overwrite current files!**
+    
+    **Examples:**
+    ```json
+    {
+      "commit_hash": "482c5443",
+      "file_patterns": ["configuration.yaml", "automations.yaml", "*.yaml"]
+    }
+    ```
+    
+    Or restore all files from HEAD:
+    ```json
+    {}
+    ```
+    """
+    try:
+        if not git_manager.enabled:
+            raise HTTPException(status_code=400, detail="Git versioning is not enabled")
+        
+        result = await git_manager.restore_files_from_commit(commit_hash, file_patterns)
+        
+        logger.warning(f"Restored {result['count']} files from commit {result['commit']}")
+        
+        return Response(
+            success=True,
+            message=f"Restored {result['count']} files from commit {result['commit']}",
+            data=result
+        )
+    except Exception as e:
+        logger.error(f"Failed to restore files: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

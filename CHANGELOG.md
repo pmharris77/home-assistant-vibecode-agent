@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.10.2] - 2025-12-06
+
+### ✨ Redesigned Git Versioning & Backup System
+
+**Automatic backup system with AI-powered change descriptions**
+
+The built-in Git versioning and backup system has been completely redesigned. Now, every time you modify scripts, dashboards, and configuration files, the agent automatically saves changes to the onboard Git repository and allows you to easily rollback to any previous version.
+
+**Key improvements:**
+- ✅ **AI-generated change descriptions**: The agent now uses AI to create meaningful descriptions of what changed and why (e.g., "Add automation: Control lights when motion detected")
+- ✅ **Easy change history**: You can ask AI to show a list of recent changes and quickly find what you need
+- ✅ **Smart rollback**: Simply describe what you want to rollback to (e.g., "rollback to when I added the motion sensor automation") and AI will find and restore it
+
+**Bug fix:**
+- ✅ **Fixed backup size issue**: Previously, large database or media files could accidentally be included in Git backups, causing rapid repository growth. Now only configuration files, scripts, automations, and dashboards are tracked in Git, keeping backups small and efficient.
+
+## [2.10.1] - 2025-12-06
+
+### 🐛 CRITICAL BUGFIX: Git Backup Size Issue
+
+**Fixed massive backup size increase caused by Git repository including large files**
+
+- ✅ **Automatic `.gitignore` creation**: Git repository now automatically creates `.gitignore` file in `/config` directory to exclude large files
+- ✅ **Excluded large files from Git**: Database files (`.db`, `.db-shm`, `.db-wal`), logs, media files, and Home Assistant internal directories are now automatically excluded
+- ✅ **Smart file tracking**: Only configuration files (YAML, JSON) are tracked in Git, preventing backup size bloat
+- ✅ **Automatic cleanup of tracked files**: When `.gitignore` is created, already tracked large files are automatically removed from Git index (but kept on disk)
+- ✅ **Backward compatibility**: Existing Git repositories are updated with `.gitignore` on next initialization
+
+**What was fixed:**
+- Previously, `git add -A` was adding ALL files from `/config`, including:
+  - SQLite database files (can be several GB)
+  - Log files
+  - Media files (`/www/`, `/media/`)
+  - Home Assistant internal storage (`.storage/`, `.homeassistant/`)
+- This caused backup size to increase from ~1GB to 10-14GB after using the agent
+- Now only configuration files are tracked, keeping backup size minimal
+
+**Impact:**
+- New installations: Problem completely resolved
+- Existing installations: `.gitignore` will be created automatically, and already tracked large files will be removed from Git index, preventing future large files from being added
+- Note: Existing Git history may still contain large files - consider cleaning Git history if needed (using `git filter-branch` or `git filter-repo`)
+
+**Technical details:**
+- `.gitignore` is automatically created/updated when Git repository is initialized
+- Excludes: `*.db`, `*.log`, `/www/`, `/media/`, `/.storage/`, `/.homeassistant/`, and other large file patterns
+- Git operations now respect `.gitignore`, ensuring only config files are versioned
+
 ## [2.10.0] - 2025-12-06
 
 ### 🎉 MAJOR: Multi-IDE Support & UI Redesign

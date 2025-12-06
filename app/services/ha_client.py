@@ -33,14 +33,22 @@ class HomeAssistantClient:
         method: str,
         endpoint: str,
         data: Optional[Dict] = None,
-        params: Optional[Dict[str, Any]] = None
+        params: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None
     ) -> Dict:
         """Make HTTP request to HA API"""
         url = f"{self.url}/api/{endpoint}"
         
+        # For POST requests, aiohttp handles query params correctly via params argument
+        # No need to manually append to URL - let aiohttp handle it
+        
+        # Use custom timeout or default 240 seconds (4 minutes)
+        # Long operations like backup_full, file operations, and Git cleanup need more time
+        timeout_seconds = timeout if timeout is not None else 240
+        
         # Debug logging
         token_preview = f"{self.token[:20]}..." if self.token else "EMPTY"
-        logger.debug(f"HA API Request: {method} {url}, Token: {token_preview}")
+        logger.info(f"HA API Request: {method} {url}, Data: {data}, Params: {params}, Timeout: {timeout_seconds}s")
         
         try:
             async with aiohttp.ClientSession() as session:
@@ -50,11 +58,11 @@ class HomeAssistantClient:
                     headers=self.headers,
                     json=data,
                     params=params,
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    timeout=aiohttp.ClientTimeout(total=timeout_seconds)
                 ) as response:
                     if response.status >= 400:
                         text = await response.text()
-                        logger.error(f"HA API error: {response.status} - {text} | Token used: {token_preview}")
+                        logger.error(f"HA API error: {response.status} - {text} | URL: {url} | Data: {data} | Params: {params} | Token used: {token_preview}")
                         raise Exception(f"HA API error: {response.status} - {text}")
                     
                     logger.debug(f"HA API success: {method} {url} -> {response.status}")
@@ -78,7 +86,16 @@ class HomeAssistantClient:
     async def call_service(self, domain: str, service: str, data: Dict) -> Dict:
         """Call a Home Assistant service"""
         endpoint = f"services/{domain}/{service}"
-        return await self._request('POST', endpoint, data)
+        
+        # Some services need special handling
+        params = None
+        timeout = None
+        
+        if domain == 'hassio' and service in ['backup_full', 'backup_partial', 'restore_full', 'restore_partial']:
+            # Long-running operations need more time
+            timeout = 300  # 5 minutes for backup/restore operations
+        
+        return await self._request('POST', endpoint, data, params=params, timeout=timeout)
     
     async def get_config(self) -> Dict:
         """Get HA configuration"""
