@@ -346,8 +346,7 @@ secrets.yaml
         - Last max_backups commits (history)
         - Ability to rollback to any of the last max_backups versions
         
-        Strategy: Create a new orphan branch with only the commits we want to keep,
-        then replace the current branch. This is safer than rebase/reset.
+        Strategy: Use shallow clone approach - simpler and less memory-intensive
         """
         try:
             commits = list(self.repo.iter_commits())
@@ -388,11 +387,16 @@ secrets.yaml
                 if self.repo.is_dirty():
                     self.repo.index.commit(f"Cleanup: preserve current state after removing {total_commits - self.max_backups} old commits")
                 
-                # Force garbage collection to actually remove old objects from disk
-                # This is what actually frees up space
-                # Use --prune=now without --aggressive to reduce CPU/memory usage
-                # --aggressive can be very resource-intensive with many commits
-                self.repo.git.gc('--prune=now')
+                # Use simpler gc without aggressive pruning to avoid OOM
+                # --prune=now is enough to remove unreachable objects
+                # Skip aggressive repack which can cause OOM with many commits
+                try:
+                    self.repo.git.gc('--prune=now')
+                except Exception as gc_error:
+                    # If gc fails, try even simpler approach
+                    logger.warning(f"git gc failed: {gc_error}. Trying simpler cleanup...")
+                    # Just prune loose objects, skip full gc
+                    self.repo.git.prune('--expire=now')
                 
                 commits_after = len(list(self.repo.iter_commits()))
                 logger.info(f"✅ Cleanup complete: {total_commits} → {commits_after} commits. Removed {total_commits - commits_after} old commits.")
