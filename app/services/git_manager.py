@@ -251,14 +251,18 @@ secrets.yaml
                 # Get current branch name
                 current_branch = self.repo.active_branch.name
                 
-                # Expire reflog before counting to exclude old commits reachable only via reflog
-                # This ensures we count only commits in actual branch history
+                # Expire reflog and prune unreachable objects before counting
+                # This ensures we count only commits in actual branch history, not reflog
                 try:
                     import subprocess
+                    # Expire all reflog entries
                     subprocess.run(['git', 'reflog', 'expire', '--expire=now', '--all'], 
                                  cwd=self.repo.working_dir, capture_output=True, timeout=10)
+                    # Prune unreachable objects (including old commits only in reflog)
+                    subprocess.run(['git', 'gc', '--prune=now', '--quiet'], 
+                                 cwd=self.repo.working_dir, capture_output=True, timeout=30)
                 except:
-                    pass  # If reflog expire fails, continue anyway
+                    pass  # If cleanup fails, continue anyway
                 
                 # Use git rev-list to count only commits reachable from HEAD
                 # Use --first-parent to follow only the main branch (not merge commits)
@@ -398,14 +402,18 @@ secrets.yaml
                 # Get current branch name
                 current_branch = self.repo.active_branch.name
                 
-                # Expire reflog before counting to exclude old commits reachable only via reflog
-                # This ensures we count only commits in actual branch history
+                # Expire reflog and prune unreachable objects before counting
+                # This ensures we count only commits in actual branch history, not reflog
                 try:
                     import subprocess
+                    # Expire all reflog entries
                     subprocess.run(['git', 'reflog', 'expire', '--expire=now', '--all'], 
                                  cwd=self.repo.working_dir, capture_output=True, timeout=10)
+                    # Prune unreachable objects (including old commits only in reflog)
+                    subprocess.run(['git', 'gc', '--prune=now', '--quiet'], 
+                                 cwd=self.repo.working_dir, capture_output=True, timeout=30)
                 except:
-                    pass  # If reflog expire fails, continue anyway
+                    pass  # If cleanup fails, continue anyway
                 
                 # Use git rev-list to count only commits reachable from HEAD
                 # Use --first-parent to follow only the main branch (not merge commits)
@@ -465,97 +473,16 @@ secrets.yaml
                     logger.warning(f"git filter-repo failed: {filter_repo_error}. Falling back to orphan branch method.")
                     # Continue with fallback method below
             
-            # Fallback: Try format-patch + git am method (more reliable than orphan branch)
-            logger.info("Using format-patch + git am method for cleanup (fallback)")
+            # Use orphan branch method directly (format-patch method was unreliable)
+            # Ensure all current changes are committed before cleanup
+            if self.repo.is_dirty(untracked_files=True):
+                await self.commit_changes("Pre-cleanup commit: save current state")
             
-            try:
-                # Ensure all current changes are committed before cleanup
-                if self.repo.is_dirty(untracked_files=True):
-                    await self.commit_changes("Pre-cleanup commit: save current state")
-                
-                # Save current branch name and working directory
-                current_branch = self.repo.active_branch.name
-                repo_path = self.repo.working_dir
-                
-                import tempfile
-                import shutil
-                import subprocess
-                
-                # Create temporary directory for patch file
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    patch_file = os.path.join(tmpdir, 'last_commits.patch')
-                    
-                    # Generate patches for last N commits
-                    logger.info(f"Generating patches for last {commits_to_keep_count} commits...")
-                    patch_output = self.repo.git.format_patch(f'-{commits_to_keep_count}', '--stdout')
-                    
-                    # Write patch to file
-                    with open(patch_file, 'w', encoding='utf-8') as f:
-                        f.write(patch_output)
-                    
-                    # Create temporary new repository
-                    new_repo_path = os.path.join(tmpdir, 'new_repo')
-                    os.makedirs(new_repo_path, exist_ok=True)
-                    
-                    # Initialize new repository
-                    subprocess.run(['git', 'init'], cwd=new_repo_path, check=True, capture_output=True)
-                    
-                    # Apply patches to new repository
-                    # Use --allow-empty to allow commits that only modify ignored files
-                    # Use --ignore-whitespace to be more lenient with patches
-                    logger.info(f"Applying patches to new repository...")
-                    result = subprocess.run(
-                        ['git', 'am', '--allow-empty', '--ignore-whitespace', patch_file],
-                        cwd=new_repo_path,
-                        capture_output=True,
-                        text=True
-                    )
-                    
-                    if result.returncode != 0:
-                        # If git am fails, try with --3way to allow 3-way merge for conflicts
-                        logger.warning(f"git am failed, trying with --3way: {result.stderr}")
-                        # Use --3way to allow 3-way merge for conflicts
-                        result = subprocess.run(
-                            ['git', 'am', '--3way', '--allow-empty', '--ignore-whitespace', patch_file],
-                            cwd=new_repo_path,
-                            capture_output=True,
-                            text=True
-                        )
-                        if result.returncode != 0:
-                            # If still fails, try to skip problematic patches
-                            logger.warning(f"git am --3way failed, trying to skip: {result.stderr}")
-                            # Try to continue or skip
-                            continue_result = subprocess.run(
-                                ['git', 'am', '--skip'],
-                                cwd=new_repo_path,
-                                capture_output=True,
-                                text=True
-                            )
-                            if continue_result.returncode != 0:
-                                raise Exception(f"git am failed even with --skip: {result.stderr}")
-                    
-                    # Copy .git directory from new repo to original (backup original first)
-                    original_git_backup = os.path.join(tmpdir, 'original_git_backup')
-                    shutil.copytree(os.path.join(repo_path, '.git'), original_git_backup)
-                    
-                    # Replace .git directory
-                    shutil.rmtree(os.path.join(repo_path, '.git'))
-                    shutil.copytree(os.path.join(new_repo_path, '.git'), os.path.join(repo_path, '.git'))
-                    
-                    # Reload repository object
-                    from git import Repo
-                    self.repo = Repo(repo_path)
-                    
-                    # Verify the result
-                    rev_list_output = self.repo.git.rev_list('--count', '--no-merges', current_branch)
-                    commits_after = int(rev_list_output.strip())
-                    logger.info(f"✅ Cleanup complete using format-patch method: {total_commits} → {commits_after} commits. Removed {total_commits - commits_after} old commits.")
-                    return
-                    
-            except Exception as format_patch_error:
-                logger.warning(f"format-patch method failed: {format_patch_error}. Falling back to orphan branch method.")
-                # Fallback to orphan branch method
-                await self._cleanup_using_orphan_branch(total_commits, commits_to_keep_count, current_branch)
+            # Save current branch name
+            current_branch = self.repo.active_branch.name
+            
+            # Use orphan branch method
+            await self._cleanup_using_orphan_branch(total_commits, commits_to_keep_count, current_branch)
             
         except Exception as cleanup_error:
             logger.error(f"Failed to cleanup commits: {cleanup_error}")
