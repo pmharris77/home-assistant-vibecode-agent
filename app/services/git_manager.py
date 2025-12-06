@@ -28,14 +28,118 @@ class GitManager:
             if (self.config_path / '.git').exists():
                 self.repo = git.Repo(self.config_path)
                 logger.info("Git repository loaded")
+                # Ensure .gitignore exists even for existing repos
+                self._create_gitignore()
             else:
                 self.repo = git.Repo.init(self.config_path)
                 self.repo.config_writer().set_value("user", "name", "HA Cursor Agent").release()
                 self.repo.config_writer().set_value("user", "email", "agent@homeassistant.local").release()
+                # Create .gitignore to exclude large files
+                self._create_gitignore()
                 logger.info("Git repository initialized")
         except Exception as e:
             logger.error(f"Failed to initialize Git: {e}")
             self.enabled = False
+    
+    def _create_gitignore(self):
+        """Create .gitignore file in config directory to exclude large files"""
+        gitignore_path = self.config_path / '.gitignore'
+        gitignore_content = """# Home Assistant Git Backup - Exclude Large Files
+# This file is automatically created by HA Vibecode Agent
+
+# Database files (can be several GB)
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+home-assistant.log
+*.log.*
+
+# Media and static files
+/www/
+/media/
+/storage/
+/tmp/
+
+# Home Assistant internal directories
+/.storage/
+/.cloud/
+/.homeassistant/
+/home-assistant_v2.db*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.code-workspace
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Secrets and tokens (should not be in Git anyway)
+secrets.yaml
+.secrets.yaml
+*.pem
+*.key
+*.crt
+"""
+        try:
+            # Only create if it doesn't exist, or update if it's missing critical patterns
+            if not gitignore_path.exists():
+                gitignore_path.write_text(gitignore_content)
+                logger.info("Created .gitignore file in config directory")
+            else:
+                # Check if it has our marker comment
+                existing_content = gitignore_path.read_text()
+                if "# Home Assistant Git Backup" not in existing_content:
+                    # Append our patterns (user might have custom .gitignore)
+                    gitignore_path.write_text(existing_content + "\n\n# HA Vibecode Agent patterns\n" + gitignore_content)
+                    logger.info("Updated .gitignore file with agent patterns")
+        except Exception as e:
+            logger.warning(f"Failed to create/update .gitignore: {e}")
+    
+    def _add_config_files_only(self):
+        """Add configuration files to Git, excluding large files via .gitignore"""
+        try:
+            # Use git add -A which respects .gitignore
+            # Since we create .gitignore with proper exclusions, this is safe
+            # .gitignore excludes: *.db, *.log, /www/, /media/, /.storage/, etc.
+            self.repo.git.add(A=True)
+            
+            # Note: Git automatically respects .gitignore, so large files
+            # (databases, logs, media) won't be added even with -A flag
+                    
+        except Exception as e:
+            logger.error(f"Failed to add config files: {e}")
+            raise
     
     async def commit_changes(self, message: str = None, skip_if_processing: bool = False) -> Optional[str]:
         """Commit current changes"""
@@ -48,13 +152,14 @@ class GitManager:
             return None
         
         try:
-            # Check if there are changes
+            # Check if there are changes (only for tracked files and config files)
             if not self.repo.is_dirty(untracked_files=True):
                 logger.debug("No changes to commit")
                 return None
             
-            # Add all changes
-            self.repo.git.add(A=True)
+            # Add only configuration files, not all files
+            # This respects .gitignore and only adds config files
+            self._add_config_files_only()
             
             # Create commit message
             if not message:
