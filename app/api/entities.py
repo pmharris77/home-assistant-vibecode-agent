@@ -100,6 +100,9 @@ async def call_service(
     - Set climate temperature: {"domain": "climate", "service": "set_temperature", "target": {"entity_id": "climate.bedroom_trv_thermostat"}, "service_data": {"temperature": 21.0}}
     """
     try:
+        # Log incoming parameters for debugging
+        logger.info(f"call_service called: domain={domain}, service={service}, service_data={service_data}, target={target}")
+        
         # Combine service_data and target into data dict
         # In Home Assistant API, target is merged with service_data
         data = {}
@@ -117,13 +120,18 @@ async def call_service(
             if not any(k in data for k in ['entity_id', 'area_id', 'device_id']):
                 data['target'] = target
         
+        logger.info(f"Data after merging: {data}")
+        
         # Some services require return_response as query parameter, not in body
         # Remove it from data if present (e.g., file.read_file)
         # This must be done AFTER merging service_data and target
-        if domain == 'file' and service == 'read_file' and 'return_response' in data:
-            logger.debug(f"Removing return_response from data. Data keys: {list(data.keys())}")
-            data = {k: v for k, v in data.items() if k != 'return_response'}
-            logger.debug(f"Data after removal: {data}")
+        if domain == 'file' and service == 'read_file':
+            if 'return_response' in data:
+                logger.info(f"Removing return_response from data. Data keys before: {list(data.keys())}")
+                data = {k: v for k, v in data.items() if k != 'return_response'}
+                logger.info(f"Data after removal: {data}")
+            else:
+                logger.info(f"return_response not found in data for file.read_file")
         
         result = await ha_client.call_service(domain, service, data)
         logger.info(f"Service called: {domain}.{service}")
