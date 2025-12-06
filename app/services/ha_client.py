@@ -77,7 +77,6 @@ class HomeAssistantClient:
     
     async def call_service(self, domain: str, service: str, data: Dict) -> Dict:
         """Call a Home Assistant service"""
-        endpoint = f"services/{domain}/{service}"
         # Some services require return_response parameter (e.g., file.read_file)
         # Remove return_response from data if present (it should be a query param, not in body)
         params = {}
@@ -87,9 +86,11 @@ class HomeAssistantClient:
                 logger.info(f"ha_client: Removing return_response from data. Data keys before: {list(data.keys())}")
                 data = {k: v for k, v in data.items() if k != 'return_response'}
                 logger.info(f"ha_client: Data keys after: {list(data.keys())}")
-            # Home Assistant API expects return_response as query parameter (string "true", not boolean)
+            # Home Assistant API expects return_response as query parameter
             params['return_response'] = 'true'
             logger.info(f"ha_client: Added return_response='true' to params. Data: {data}, Params: {params}")
+        
+        endpoint = f"services/{domain}/{service}"
         logger.info(f"ha_client.call_service: endpoint={endpoint}, data={data}, params={params}")
         return await self._request('POST', endpoint, data, params=params)
     
