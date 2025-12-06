@@ -78,7 +78,11 @@ class HomeAssistantClient:
     async def call_service(self, domain: str, service: str, data: Dict) -> Dict:
         """Call a Home Assistant service"""
         endpoint = f"services/{domain}/{service}"
-        return await self._request('POST', endpoint, data)
+        # Some services require return_response parameter (e.g., file.read_file)
+        params = {}
+        if domain == 'file' and service == 'read_file':
+            params['return_response'] = True
+        return await self._request('POST', endpoint, data, params=params)
     
     async def get_config(self) -> Dict:
         """Get HA configuration"""

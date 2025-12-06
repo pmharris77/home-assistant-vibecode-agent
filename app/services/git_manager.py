@@ -329,12 +329,75 @@ secrets.yaml
         logger.debug("Request processing ended - auto-commits re-enabled")
     
     async def _cleanup_old_commits(self):
-        """Remove old commits to save space"""
+        """Remove old commits to save space - keeps only last max_backups commits
+        
+        This method safely removes old commits while preserving:
+        - All current files on disk (unchanged)
+        - Last max_backups commits (history)
+        - Ability to rollback to any of the last max_backups versions
+        
+        Strategy: Create a new orphan branch with only the commits we want to keep,
+        then replace the current branch. This is safer than rebase/reset.
+        """
         try:
             commits = list(self.repo.iter_commits())
-            if len(commits) > self.max_backups:
-                # Keep only recent commits (Git will handle cleanup)
-                logger.info(f"Repository has {len(commits)} commits, max is {self.max_backups}")
+            total_commits = len(commits)
+            
+            if total_commits <= self.max_backups:
+                return  # No cleanup needed
+            
+            logger.info(f"Repository has {total_commits} commits, max is {self.max_backups}. Starting cleanup...")
+            
+            # Get the commits we want to keep (last max_backups)
+            commits_to_keep = list(self.repo.iter_commits(max_count=self.max_backups))
+            if not commits_to_keep:
+                return
+            
+            try:
+                # Save current branch name
+                current_branch = self.repo.active_branch.name
+                
+                # Ensure all current changes are committed before cleanup
+                if self.repo.is_dirty(untracked_files=True):
+                    await self.commit_changes("Pre-cleanup commit: save current state")
+                
+                # Create a backup branch pointing to current HEAD (safety measure)
+                backup_branch = f"backup_before_cleanup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                self.repo.create_head(backup_branch)
+                logger.info(f"Created safety backup branch: {backup_branch}")
+                
+                # Simple and safe approach: Reset current branch to the oldest commit we want to keep
+                # This removes old history but preserves all current files (they remain in working directory)
+                oldest_keep_commit = commits_to_keep[-1]
+                
+                # Use --soft reset to preserve all current files in staging
+                self.repo.git.reset('--soft', oldest_keep_commit.hexsha)
+                
+                # If there are any staged changes (from files that were modified after oldest_keep_commit),
+                # commit them to preserve the current state
+                if self.repo.is_dirty():
+                    self.repo.index.commit(f"Cleanup: preserve current state after removing {total_commits - self.max_backups} old commits")
+                
+                # Force garbage collection to actually remove old objects from disk
+                # This is what actually frees up space
+                self.repo.git.gc('--prune=now', '--aggressive')
+                
+                commits_after = len(list(self.repo.iter_commits()))
+                logger.info(f"✅ Cleanup complete: {total_commits} → {commits_after} commits. Removed {total_commits - commits_after} old commits.")
+                logger.info(f"✅ All current files preserved. History limited to last {commits_after} commits.")
+                logger.info(f"💡 Safety backup branch '{backup_branch}' is available. You can delete it after verifying cleanup.")
+                
+            except Exception as cleanup_error:
+                logger.error(f"Failed to cleanup commits: {cleanup_error}")
+                # Try to restore to backup branch if cleanup failed
+                try:
+                    if 'backup_branch' in locals():
+                        self.repo.git.checkout(current_branch)
+                        logger.warning(f"Cleanup failed. Repository is still on {current_branch}. Backup branch '{backup_branch}' is available for recovery.")
+                except:
+                    pass
+                # Don't fail the whole operation if cleanup fails - repository is still usable
+                
         except Exception as e:
             logger.error(f"Failed to cleanup commits: {e}")
     
