@@ -185,16 +185,16 @@ If you find this project useful and want to support its development, **please co
 
 ---
 
-## 🤖 Using with Cursor AI
+## 🤖 Using with AI IDE (Cursor, VS Code etc)
 
-This add-on enables **Cursor AI to autonomously manage your Home Assistant** through natural language - no manual copy-pasting needed!
+This add-on enables **AI IDE to autonomously manage your Home Assistant** through natural language - no manual copy-pasting needed!
 
 ### ⚠️ Important Disclaimer
 
 **This tool is designed for experienced Home Assistant users who understand what they're doing.** 
 
 - ✅ **Always review changes** before applying them to production systems
-- ⚠️ **Cursor AI can accidentally break your configuration** if given incorrect instructions or outdated information
+- ⚠️ **AI can accidentally break your configuration** if given incorrect instructions or outdated information
 - 💾 **Git versioning is enabled by default** - all changes are backed up and can be rolled back
 - 🔄 **Test in a safe environment first** if you're new to AI-driven automation
 - 📖 **Verify syntax and compatibility** with your Home Assistant version
@@ -217,9 +217,9 @@ Analyze my automations and suggest optimizations
 Create a smart lighting automation for movie mode
 ```
 
-Cursor AI will autonomously read your configuration, create components, and deploy everything automatically!
+AI will autonomously read your configuration, create components, and deploy everything automatically!
 
-**That's it!** Cursor AI will use the MCP protocol to communicate with your Home Assistant.
+**That's it!** AI IDE will use the MCP protocol to communicate with your Home Assistant.
 
 **Learn more:** [MCP Home Assistant on GitHub](https://github.com/Coolver/home-assistant-mcp) | [NPM Package](https://www.npmjs.com/package/@coolver/home-assistant-mcp)
 
@@ -255,9 +255,9 @@ My bedroom lights automation isn't working. Check the logs,
 find the problem, and fix it.
 ```
 
-### What Cursor AI Can Do
+### What Vibecode Agent Can Do
 
-With this add-on and [MCP integration](https://github.com/Coolver/home-assistant-mcp), Cursor AI can:
+With this add-on and [MCP integration](https://github.com/Coolver/home-assistant-mcp), AI IDE can:
 
 ✅ **Analyze YOUR configuration** - detects your actual devices and entities  
 ✅ **Create complex systems autonomously** - 10+ interconnected automations  
@@ -270,55 +270,6 @@ With this add-on and [MCP integration](https://github.com/Coolver/home-assistant
 ✅ **End-to-end deployment** - from analysis to production  
 
 **Stop writing YAML manually! Just describe what you want.** 🚀
-
----
-
-## 🚀 Installation (Detailed)
-
-### Option 1: Via GitHub Repository (Recommended)
-
-1. Open **Settings** → **Add-ons** → **Add-on Store**
-2. Click **⋮** (three-dot overflow menu in top right corner)
-3. Select **Repositories**
-4. Add repository URL: `https://github.com/Coolver/home-assistant-cursor-agent`
-5. Click **Add**
-6. Refresh the page - find **HA Vibecode Agent** in the list
-7. Click **INSTALL**
-8. Configure and start
-
-### Option 2: Manual Installation (Alternative)
-
-1. **Copy this folder** to `/addons/home-assistant-cursor-agent/` on your HA system via SSH/Samba/File Editor
-
-2. **Reload Add-on repositories:**
-   - Supervisor → Add-on Store → ⋮ → Check for updates
-
-3. **Install the Add-on:**
-   - Find "HA Vibecode Agent" in Local Add-ons
-   - Click **INSTALL**
-
-4. **Configure:**
-   - Set port (default: 8099)
-   - Enable Git versioning (recommended)
-   - Set log level
-
-5. **Start the Add-on**
-
-6. **Get your API token:**
-   - The add-on uses Home Assistant's Supervisor token
-   - For external access, use your Long-Lived Access Token
-
----
-
-## ⚙️ Configuration
-
-```yaml
-port: 8099                    # API port
-log_level: info               # Logging: debug, info, warning, error
-enable_git_versioning: true   # Enable automatic backups
-auto_backup: true             # Auto-commit on changes
-max_backups: 30               # Maximum commits to keep (default: 30, cleanup keeps last 20)
-```
 
 ---
 
@@ -496,12 +447,12 @@ DELETE /api/logs/clear
 
 All API endpoints (except `/api/health`) require authentication.
 
-### For MCP Clients (Cursor AI)
+### For MCP Clients (Cursor AI, VS Code etc)
 
 The add-on uses **Agent Key** authentication:
 
 1. Get your Agent Key from **Web UI** (Settings → Add-ons → HA Vibecode Agent → Open Web UI)
-2. Configure in Cursor MCP settings with `HA_AGENT_KEY`
+2. Configure in Cursor MCP / VS Code settings with `HA_AGENT_KEY`
 3. Agent Key is auto-generated on first start
 
 ### For Direct API Access
@@ -737,7 +688,7 @@ python -m uvicorn app.main:app --reload --port 8099
 
 ## 🎯 Use Cases
 
-### For Cursor AI
+### For Cursor AI, VS Code + Co-Pilot etc
 
 This add-on enables Cursor AI to:
 
@@ -793,24 +744,6 @@ AI via Agent:
 3. Restarts HA
 4. Verifies restoration
 ```
-
----
-
-## 📊 API Overview
-
-| Endpoint | Methods | Description |
-|----------|---------|-------------|
-| `/api/files` | GET, POST, DELETE | File operations |
-| `/api/entities` | GET | Entity states and services |
-| `/api/helpers` | POST, DELETE | Input helper management |
-| `/api/automations` | GET, POST, DELETE | Automation management |
-| `/api/scripts` | GET, POST, DELETE | Script management |
-| `/api/system` | POST, GET | System operations |
-| `/api/backup` | GET, POST | Git versioning |
-| `/api/logs` | GET, DELETE | Agent logs |
-| `/api/health` | GET | Health check (no auth) |
-| `/docs` | GET | Interactive API docs |
-
 ---
 
 ## ⚠️ Important Notes
@@ -873,25 +806,9 @@ Common issues:
 
 ---
 
-## 📞 Support
-
-- **Issues:** GitHub Issues
-- **Documentation:** `/docs` endpoint (Swagger UI)
-- **Logs:** `/api/logs/` endpoint
-
----
-
 ## 📜 License
 
 MIT License - See LICENSE file
-
----
-
-## 🙏 Credits
-
-Created for seamless integration between **Cursor AI** and **Home Assistant**.
-
-Enables AI to autonomously manage smart home configurations! 🏠🤖
 
 ---
 
