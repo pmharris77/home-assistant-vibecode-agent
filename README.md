@@ -7,6 +7,7 @@
 **Let AI build your Home Assistant automations – or act as your DevOps for the ones you write by hand. Just describe what you need in natural language. 🏠🤖**
 
 You describe your goal → AI inspects your Home Assistant → designs a custom solution → and deploys it on-board automatically. 🚀
+
 And if you prefer to handcraft your automations and scripts yourself, the agent can simply act as your DevOps and extra pair of hands: quickly uploading your changes, running tests, and analyzing logs on demand. **You stay in control and decide how much you delegate to AI and how deep it should go.**
 
 Transform the way you manage your smart home. This add-on enables **Cursor**, **Visual Studio Code (VS Code)**, or any **MCP-enabled IDE** to:
