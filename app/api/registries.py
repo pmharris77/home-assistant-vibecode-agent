@@ -6,7 +6,7 @@ import yaml
 
 from app.services.ha_websocket import get_ws_client
 from app.services.file_manager import file_manager
-from app.models.schemas import Response, EntityRemoveRequest, AreaRemoveRequest
+from app.models.schemas import Response, EntityRemoveRequest, AreaRemoveRequest, DeviceRemoveRequest
 
 router = APIRouter()
 logger = logging.getLogger('ha_cursor_agent')
@@ -515,9 +515,7 @@ async def update_device_registry_entry(
         raise HTTPException(status_code=500, detail=f"Failed to update Device Registry: {str(e)}")
 
 @router.post("/devices/remove")
-async def remove_device_registry_entry(
-    device_id: str = Body(..., description="Device ID to remove from registry")
-):
+async def remove_device_registry_entry(request: DeviceRemoveRequest):
     """
     Remove device from Device Registry
     
@@ -525,12 +523,12 @@ async def remove_device_registry_entry(
     """
     try:
         ws_client = await get_ws_client()
-        result = await ws_client.remove_device_registry_entry(device_id)
+        result = await ws_client.remove_device_registry_entry(request.device_id)
         
-        logger.warning(f"Removed device from Device Registry: {device_id}")
+        logger.warning(f"Removed device from Device Registry: {request.device_id}")
         return {
             "success": True,
-            "device_id": device_id,
+            "device_id": request.device_id,
             "result": result
         }
     except Exception as e:

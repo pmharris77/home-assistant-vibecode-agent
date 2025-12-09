@@ -65,6 +65,10 @@ class AreaRemoveRequest(BaseModel):
     """Area removal request model"""
     area_id: str = Field(..., description="Area ID to remove from registry")
 
+class DeviceRemoveRequest(BaseModel):
+    """Device removal request model"""
+    device_id: str = Field(..., description="Device ID to remove from registry")
+
 class Response(BaseModel):
     """Generic response model"""
     success: bool
