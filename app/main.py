@@ -147,9 +147,9 @@ logger.info(f"=================================")
 async def startup_event():
     """Initialize WebSocket client and Supervisor client on startup"""
     # Initialize Supervisor client (for add-on management)
-    if SUPERVISOR_TOKEN:
-        from app.services.supervisor_client import supervisor_client
-        logger.info(f"✅ SupervisorClient ready - URL: {supervisor_client.base_url}")
+    # if SUPERVISOR_TOKEN:
+    #     from app.services.supervisor_client import supervisor_client
+    #     logger.info(f"✅ SupervisorClient ready - URL: {supervisor_client.base_url}")
     
     # Only start WebSocket if we have SUPERVISOR_TOKEN (running as add-on)
     if SUPERVISOR_TOKEN:
@@ -186,7 +186,7 @@ app.include_router(backup.router, prefix="/api/backup", tags=["Backup"], depende
 app.include_router(logs.router, prefix="/api/logs", tags=["Logs"], dependencies=[Depends(verify_token)])
 app.include_router(logbook.router, prefix="/api/logbook", tags=["Logbook"], dependencies=[Depends(verify_token)])
 app.include_router(hacs.router, prefix="/api/hacs", tags=["HACS"])
-app.include_router(addons.router, prefix="/api/addons", tags=["Add-ons"])
+#app.include_router(addons.router, prefix="/api/addons", tags=["Add-ons"])
 app.include_router(lovelace.router, prefix="/api/lovelace", tags=["Lovelace"], dependencies=[Depends(verify_token)])
 app.include_router(themes.router, prefix="/api/themes", tags=["Themes"], dependencies=[Depends(verify_token)])
 app.include_router(registries.router, prefix="/api/registries", tags=["Registries"], dependencies=[Depends(verify_token)])

@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  vibecode-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_FROM: python:3.11-alpine
+    image: pmharris77/home-assistant-vibecode-agent:latest
+    container_name: vibecode-agent
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./app:/app/app:ro
+    environment:
+      - PORT: 8099
+      - CONFIG_PATH: ${CONFIG_PATH} # Path to HA Configuration Files
+      - SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:? SUPERVISOR_TOKEN is required!} # HA API Key
+      - LOG_LEVEL: ${LOG_LEVEL:-"info"}
+      - HA_URL: ${HA_URL:?HA_URL is required!}
+      - GIT_VERSIONING_AUTO: ${GIT_VERSIONING_AUTO:-true}
+      - MAX_BACKUPS: ${MAX_BACKUPS:-30}
