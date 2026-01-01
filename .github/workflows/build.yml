@@ -82,7 +82,7 @@ jobs:
         context: .
         file: Dockerfile
         build-args: |
-          BUILD_FROM=python:3.11-alpine
+          BUILD_FROM=python:3.11
         push: ${{ github.ref == 'refs/heads/main' }} # Only push image if we are on main (not for PR merge branches)
         platforms: linux/amd64,linux/arm/v7,linux/arm64
         tags: ${{ env.tags }}
