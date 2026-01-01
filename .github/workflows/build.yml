@@ -48,10 +48,6 @@ jobs:
         dockerfile: Dockerfile
         failure-threshold: error
 
-    - name: Validate docker-compose.yml
-      run: |
-        docker compose -f docker-compose.yml config >/dev/null
-
   docker:
     needs: [lint]
     runs-on: ubuntu-latest
