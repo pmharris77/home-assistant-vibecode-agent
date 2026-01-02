@@ -19,7 +19,7 @@ jobs:
     - name: Generate image configuration
       run: |
         DOCKER_IMAGE=ghcr.io/homeassistant-vibecode-agent
-        TAGS="$TAGS,latest"
+        TAGS="latest"
         TAGS="$TAGS,${GITHUB_SHA::8}"
 
         # Store docker build info in env file for use by docker job
