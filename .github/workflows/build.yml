@@ -10,7 +10,7 @@ on:
   pull_request:
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: ghcr.io/pmharris77
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
